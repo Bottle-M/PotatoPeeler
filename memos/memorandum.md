@@ -22,7 +22,7 @@
 1. 玩家在此区块停留时间，**每经过 1 tick**，附近有几个玩家，`InhabitedTime` 就增加多少。
    - 这里的“附近”似乎指的是在**刷怪半径范围**（单位是区块）内，见 [API 文档](https://bukkit.windit.net/javadoc/org/bukkit/Chunk.html#getInhabitedTime())以及 [minecraft-optimization 文档](https://github.com/YouHaveTrouble/minecraft-optimization?tab=readme-ov-file#mob-spawn-range)。   
 
-2. 在服务器中，可能每个玩家**身边载入内存（Loaded）的区块**的 `InhabitedTime` 都会增加。不过增加上并不一定遵循第 1 点的“有几个玩家在附近就增加多少”，详见这个[讨论贴](https://www.spigotmc.org/threads/chunk-inhabited-time-increase-unexpectedly.580847/)。  
+2. 在服务器中，可能每个玩家**身边载入内存（Loaded）的区块**的 `InhabitedTime` 都会增加。不过增加上并不一定遵循第 1 点的“有几个玩家在附近就增加多少”，可能有遗留 BUG。详见这个[讨论贴](https://www.spigotmc.org/threads/chunk-inhabited-time-increase-unexpectedly.580847/)。  
 
 ... 待进一步研究  
 
