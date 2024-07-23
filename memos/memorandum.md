@@ -26,14 +26,43 @@
 
 ... 待进一步研究  
 
+## 技术难点以及可能的方案
+
+1. 区块文件是以二进制数据密集存储在 Anvil 文件中的（`.mca`），在头部记录各个区块数据的起始偏移量。也就是说在删除必要的区块文件后，我还需要对文件进行紧凑（Compact）操作才能减少 `.mca` 文件的大小。  
+
+2. 服务器可能会异步保存区块，也就是说不知道每个 `.mca` 文件在什么时候会被修改，为了防止区域损坏，在处理 `.mca` 的文件时应当**先创建一个拷贝**，在拷贝中删除无用的区块，然后再写回原文件。  
+   为了防止这个期间 `.mca` 发生修改，需要对 `.mca` 文件计算多次 CRC32 摘要：  
+   1. 创建拷贝前后各计算一次摘要 A，B，进行比对。
+   2. 在修改拷贝后计算一次摘要 C，和 B 进行比对。
+   3. 在把拷贝写入文件后再计算一次摘要 D，和 C 进行比对。
+   4. 若以上比对结果均为相等，则正确修改了 `.mca` 文件。  
+
+   
+
+## 优化
+
+1. 扫描 `.mca` 文件时避开玩家所在的区域（可以根据玩家坐标计算出来所在区域）。  
+2. 一旦发现 `.mca` 文件中有**已经被载入内存**的区块，应当**立即跳过**对这个 `.mca` 文件的处理。  
+   > 对于 `InhabitedTime` **低于阈值**的区块，可以用 [`isChunkLoaded(int x, int z)`](https://bukkit.windit.net/javadoc/org/bukkit/World.html#isChunkLoaded(int,int)) 来判断其是否被载入。    
+   > 同时还要**监听** `ChunkLoadEvent` / `ChunkUnloadEvent` 事件，有区块载入 / 卸载时检查其是否位于当前在处理的区域内，如果是则停止处理本区域。
+
+
+## 可能的问题  
+
+1. 服务器运行过程中，若卸载了 `a.mca` 中的区块后，`a.mca` 被本插件修改了（移除了部分区块），那么服务器在不重启的情况下重新载入 `a.mca` 时能正常加载这个区域剩余的区块吗？  
+
+
 ## 必须要注意的地方（待写入 README）
 
-采用 Paper 端或者是以 Paper 为上游的服务端，在**世界配置文件**中一定不要修改 `fixed-chunk-inhabited-time` 这一项，不然会固定区块的 `InhabitedTime`，导致本插件失效。  
+1. 采用 Paper 端或者是以 Paper 为上游的服务端，在**世界配置文件**中一定不要修改 `fixed-chunk-inhabited-time` 这一项，不然会固定区块的 `InhabitedTime`，导致本插件失效。  
 
-* 文档：[World Configuration - PaperMC](https://docs.papermc.io/paper/reference/world-configuration#chunks_fixed_chunk_inhabited_time)  
+   * 文档：[World Configuration - PaperMC](https://docs.papermc.io/paper/reference/world-configuration#chunks_fixed_chunk_inhabited_time)    
+
+2. 只能在**依靠种子自然生成的世界**中启动，如果是利用外部软件生成的地图，最好不要使用此插件的功能（否则移除的部分区块重新生成时，会按照种子进行生成，造成割裂）。
 
 ## 参考文档
 
 * [区块格式 - Minecraft Wiki](https://wiki.biligame.com/mc/%E5%8C%BA%E5%9D%97%E6%A0%BC%E5%BC%8F)  
 * [Chunk - Bukkit API](https://bukkit.windit.net/javadoc/org/bukkit/Chunk.html)  
 * [Minecraft-Optimization](https://github.com/YouHaveTrouble/minecraft-optimization?tab=readme-ov-file)  
+* [关于区块删除的讨论贴 - Bukkit Forum](https://bukkit.org/threads/delete-a-chunk.82993/)  
