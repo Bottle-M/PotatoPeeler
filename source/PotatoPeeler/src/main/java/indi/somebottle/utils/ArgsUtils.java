@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ArgsHandler {
+public class ArgsUtils {
     // 定义 PotatoPeeler 能用到的参数 <参数名, 是否要指定值>
     public final static HashMap<String, Boolean> PEELER_ARGS = new HashMap<String, Boolean>();
 
