@@ -1,12 +1,12 @@
 package indi.somebottle.exceptions;
 
-public class WorldNotExistException extends Exception {
+public class RegionFileNotFoundException extends Exception {
     /**
-     * 自定义异常：世界目录不存在
+     * 自定义异常：区域文件未找到
      *
      * @param message 异常信息
      */
-    public WorldNotExistException(String message) {
+    public RegionFileNotFoundException(String message) {
         super(message);
     }
 }

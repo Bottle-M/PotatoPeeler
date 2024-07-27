@@ -12,9 +12,101 @@ public class ArgsUtils {
 
     // 初始化参数
     static {
+        // Minecraft 服务器世界目录路径，可以有多个（分号分隔）
+        PEELER_ARGS.put("--world-dirs", true);
+        // Minecraft 服务端 jar 包路径
         PEELER_ARGS.put("--server-jar", true);
+        // InhabitedTime 阈值，低于此值的区块会被移除，单位：tick
         PEELER_ARGS.put("--min-inhabited", true);
+        // .mca 文件在创建后多久才能被删除，单位：分钟
         PEELER_ARGS.put("--mca-deletable-delay", true);
+        // 是否详细输出区块处理情况
+        PEELER_ARGS.put("--verbose", false);
+        // 是否跳过本次处理
+        PEELER_ARGS.put("--skip-peeler", false);
+        // 处理间隔时间，单位：分钟
+        PEELER_ARGS.put("--cool-down", true);
+        // 处理时采用的线程数
+        PEELER_ARGS.put("--threads-num", true);
+    }
+
+    /**
+     * 按分号分隔 worldDirs 参数，得到多个路径
+     *
+     * @param worldDirs 分号分隔的世界目录路径
+     * @return 多个世界目录路径 List<String>
+     */
+    public static List<String> parseWorldDirs(String worldDirs) {
+        List<String> worldDirList = new ArrayList<>();
+        String[] dirs = worldDirs.split(";");
+        for (String dir : dirs) {
+            if (dir.trim().length() == 0) {
+                // 空字符串不计入
+                continue;
+            }
+            worldDirList.add(dir);
+        }
+        return worldDirList;
+    }
+
+    public static boolean checkPeelerArgs(HashMap<String, String> peelerArgs) {
+        // 需要接收数字的参数无法被解析成数字则参数无效
+        if (!CheckUtils.isInt(peelerArgs.get("--min-inhabited"))) {
+            System.out.println("PotatoPeeler parameter --min-inhabited must be an integer.");
+            return false;
+        }
+        if (Long.parseLong(peelerArgs.get("--min-inhabited")) < 0) {
+            // 不能小于 0
+            System.out.println("PotatoPeeler parameter --min-inhabited must be >= 0.");
+            return false;
+        }
+        if (!CheckUtils.isInt(peelerArgs.get("--cool-down"))) {
+            System.out.println("PotatoPeeler parameter --cool-down must be an integer.");
+            return false;
+        }
+        if (Long.parseLong(peelerArgs.get("--cool-down")) < 0) {
+            // 不能小于 0
+            System.out.println("PotatoPeeler parameter --cool-down must be >= 0.");
+            return false;
+        }
+        if (!CheckUtils.isInt(peelerArgs.get("--mca-deletable-delay"))) {
+            System.out.println("PotatoPeeler parameter --mca-deletable-delay must be an integer.");
+            return false;
+        }
+        if (!CheckUtils.isInt(peelerArgs.get("--threads-num"))) {
+            System.out.println("PotatoPeeler parameter --threads-num must be an integer.");
+            return false;
+        }
+        if (Long.parseLong(peelerArgs.get("--threads-num")) < 1) {
+            // 不能小于 1
+            System.out.println("PotatoPeeler parameter --threads-num must be >= 1.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 把没有指定值的参数设置成默认的
+     *
+     * @param peelerArgs PotatoPeeler 参数 Map
+     */
+    public static void setDefaultPeelerArgs(HashMap<String, String> peelerArgs) {
+        // 如果没有设定 minInhabited，默认为 0
+        if (!peelerArgs.containsKey("--min-inhabited")) {
+            peelerArgs.put("--min-inhabited", "0");
+        }
+        // 如果没有设定 cool-down，则默认为 -1
+        if (!peelerArgs.containsKey("--cool-down")) {
+            peelerArgs.put("--cool-down", "0");
+        }
+        // 如果没有设定 mcaDeletableDelay，则默认为 0
+        if (!peelerArgs.containsKey("--mca-deletable-delay")) {
+            peelerArgs.put("--mca-deletable-delay", "0");
+        }
+        // 如果没有指定线程数，默认为 10
+        if (!peelerArgs.containsKey("--threads-num")) {
+            peelerArgs.put("--threads-num", "10");
+        }
     }
 
     /**
