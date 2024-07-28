@@ -1,7 +1,9 @@
 package indi.somebottle;
 
+import indi.somebottle.core.RegionTaskDispatcher;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
+import indi.somebottle.exceptions.RegionTaskInterruptedException;
 import indi.somebottle.utils.RegionUtils;
 
 import java.io.File;
@@ -18,7 +20,7 @@ public class Potato {
      * @param verboseOutput     是否输出详细信息
      * @return 处理后的结果 PeelResult
      */
-    public static PeelResult peel(String worldPath, long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException {
+    public static PeelResult peel(String worldPath, long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException, RegionTaskInterruptedException {
         long sizeReduced = 0;
         long chunksRemoved = 0;
         long regionsAffected = 0;
@@ -27,7 +29,7 @@ public class Potato {
         Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
         if (regionDirPath == null) {
             // 没有找到区域文件所在目录
-            throw new RegionFileNotFoundException("Can not find region directory in " + worldPath);
+            throw new RegionFileNotFoundException("Can not find region directory in " + worldPath + " or there's no mca file in it.");
         }
         // 扫描目录下的 .mca 文件
         File[] mcaFiles = regionDirPath.toFile().listFiles(file -> file.getName().endsWith(".mca"));
@@ -36,8 +38,20 @@ public class Potato {
             throw new RegionFileNotFoundException("Can not find .mca files in " + regionDirPath);
         }
         // 找到 .mca 文件了则开始处理
-
-        double timeElapsed = (double) (System.currentTimeMillis() - startTime) / 1000;
+        // 创建任务调度器
+        RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(minInhabited, mcaDeletableDelay, threadsNum, verboseOutput);
+        // 把文件提交给任务调度器
+        for (File mcaFile : mcaFiles) {
+            dispatcher.addTask(mcaFile);
+        }
+        // 启动任务调度器
+        dispatcher.start();
+        // 等待任务完成
+        if (!dispatcher.waitForCompletion()) {
+            // 如果被打断了，抛出异常
+            throw new RegionTaskInterruptedException("Interrupted while waiting for .mca files to be processed.");
+        }
+        long timeElapsed = System.currentTimeMillis() - startTime;
         return new PeelResult(sizeReduced, chunksRemoved, regionsAffected, timeElapsed);
     }
 }

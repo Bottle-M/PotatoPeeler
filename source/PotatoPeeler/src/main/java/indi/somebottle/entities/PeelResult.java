@@ -7,8 +7,8 @@ public class PeelResult {
     private long chunksRemoved;
     // 受影响的区域数
     private long regionsAffected;
-    // 运行时间（秒）
-    private double timeElapsed;
+    // 运行时间（毫秒）
+    private long timeElapsed;
 
     public PeelResult() {
         sizeReduced = 0;
@@ -23,18 +23,18 @@ public class PeelResult {
      * @param chunksRemoved   移除的区块数目
      * @param regionsAffected 受影响的区域数目
      */
-    public PeelResult(long sizeReduced, long chunksRemoved, long regionsAffected, double timeElapsed) {
+    public PeelResult(long sizeReduced, long chunksRemoved, long regionsAffected, long timeElapsed) {
         this.sizeReduced = sizeReduced;
         this.chunksRemoved = chunksRemoved;
         this.regionsAffected = regionsAffected;
         this.timeElapsed = timeElapsed;
     }
 
-    public double getTimeElapsed() {
+    public long getTimeElapsed() {
         return timeElapsed;
     }
 
-    public void setTimeElapsed(double timeElapsed) {
+    public void setTimeElapsed(long timeElapsed) {
         this.timeElapsed = timeElapsed;
     }
 

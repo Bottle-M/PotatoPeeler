@@ -2,6 +2,7 @@ package indi.somebottle;
 
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
+import indi.somebottle.exceptions.RegionTaskInterruptedException;
 import indi.somebottle.utils.ArgsUtils;
 import indi.somebottle.utils.TimeUtils;
 import indi.somebottle.utils.ExceptionUtils;
@@ -90,18 +91,26 @@ public class Main {
         } else {
             // 开始处理区块
             System.out.println("====== POTATO-PEELER RUNNING ======");
-            try {
-                for (String worldDirPath : worldDirPaths) {
+            // 标记是否进行了处理
+            boolean peeled = false;
+            for (String worldDirPath : worldDirPaths) {
+                try {
                     // 对于每个世界都进行处理
                     Potato.peel(worldDirPath, minInhabited, mcaDeletableDelay, threadsNum, verboseOutput);
+                    peeled = true;
+                } catch (RegionFileNotFoundException e) {
+                    // 发生了区域文件没找到的异常，跳过
+                    ExceptionUtils.print(e, "Failed to process regions of world: " + worldDirPath + ", skipped.");
+                } catch (RegionTaskInterruptedException e) {
+                    // 发生了区域处理被中断的异常
+                    ExceptionUtils.print(e, "Failed to process regions of world: " + worldDirPath + ", interrupted.");
+                    // 退出程序
+                    System.exit(1);
                 }
-                // 更新上次运行的时间
-                TimeUtils.setLastRunTime(TimeUtils.timeNow());
-            } catch (RegionFileNotFoundException e) {
-                // 发生了区域文件没找到的异常
-                ExceptionUtils.print(e, "Failed to process world regions.");
-                System.exit(1);
             }
+            // 如果有世界被处理，更新上次运行的时间
+            if (peeled)
+                TimeUtils.setLastRunTime(TimeUtils.timeNow());
         }
         // 处理完区块后若没有指定 server-jar 则退出
         if (!peelerArgs.containsKey("--server-jar")) {
