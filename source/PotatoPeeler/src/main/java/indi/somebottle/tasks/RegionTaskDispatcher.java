@@ -1,8 +1,13 @@
-package indi.somebottle.core;
+package indi.somebottle.tasks;
 
-import indi.somebottle.utils.ExceptionUtils;
+import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
+import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 // 此类用于把 .mca 文件分配给多个线程进行处理
@@ -12,8 +17,11 @@ public class RegionTaskDispatcher {
     private final int threadsNum;
     private final boolean verboseOutput;
     private final ExecutorService executor;
-    // 存放 .mca 文件对象的阻塞队列
-    private final BlockingQueue<File> queue = new LinkedBlockingQueue<>();
+    // 存放 .mca 文件对象的队列
+    // 每个线程都有一个
+    private final List<Queue<File>> queues = new ArrayList<>();
+    // 记录上次把任务加入到哪个下标的队列中了
+    private int enqueueIndex = 0;
     // 标记是否已经开始运行任务
     private boolean started = false;
 
@@ -24,15 +32,25 @@ public class RegionTaskDispatcher {
         this.threadsNum = threadsNum;
         // 指定线程数初始化线程池
         this.executor = Executors.newFixedThreadPool(threadsNum);
+        // 为每个线程都初始化一个队列
+        for (int i = 0; i < threadsNum; i++) {
+            queues.add(new LinkedList<>());
+        }
     }
 
     /**
      * 提交一个新的 .mca 文件处理任务
      *
      * @param mcaFile mca 文件 File 对象
+     * @throws RegionTaskNotAcceptedException 如果在启动执行后尝试添加任务则会抛出
+     * @apiNote 启动任务执行后不可添加新任务（为了线程安全而设计）
      */
-    public void addTask(File mcaFile) {
-        queue.add(mcaFile);
+    public void addTask(File mcaFile) throws RegionTaskNotAcceptedException {
+        if (started)
+            throw new RegionTaskNotAcceptedException("Can not add task after start.");
+        // 把任务均匀地分散到各个队列中
+        queues.get(enqueueIndex).add(mcaFile);
+        enqueueIndex = (enqueueIndex + 1) % threadsNum;
     }
 
     /**
@@ -56,19 +74,17 @@ public class RegionTaskDispatcher {
     /**
      * 启动所有的工作线程，开始处理 .mca 文件
      *
-     * @note 此方法只能执行一次，后续调用的时候是空操作
+     * @throws RegionTaskAlreadyStartedException 如果在启动执行后尝试再次启动则会抛出
+     * @apiNote 此方法只能执行一次，重复调用会抛出异常
      */
-    public void start() {
+    public void start() throws RegionTaskAlreadyStartedException {
+        // 重复启动会抛出异常
         if (started)
-            return;
+            throw new RegionTaskAlreadyStartedException("The task has been started.");
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            executor.submit(() -> {
-                while (!Thread.currentThread().isInterrupted() && !queue.isEmpty()) {
-                    // 队列有任务时就取出进行处理
-                }
-            });
+            executor.submit(new RegionTaskRunner(queues.get(i), minInhabited, mcaDeletableDelay, verboseOutput));
         }
         // 停止建立新的线程
         executor.shutdown();

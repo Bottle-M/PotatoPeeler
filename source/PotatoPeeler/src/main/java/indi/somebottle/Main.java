@@ -106,6 +106,11 @@ public class Main {
                     ExceptionUtils.print(e, "Failed to process regions of world: " + worldDirPath + ", interrupted.");
                     // 退出程序
                     System.exit(1);
+                } catch (Exception e) {
+                    // 到这里如果捕捉到了未知的异常，则退出程序
+                    ExceptionUtils.print(e, "Unexpected exception!");
+                    // 退出程序
+                    System.exit(1);
                 }
             }
             // 如果有世界被处理，更新上次运行的时间

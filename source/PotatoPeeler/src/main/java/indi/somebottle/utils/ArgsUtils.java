@@ -95,7 +95,7 @@ public class ArgsUtils {
         if (!peelerArgs.containsKey("--min-inhabited")) {
             peelerArgs.put("--min-inhabited", "0");
         }
-        // 如果没有设定 cool-down，则默认为 -1
+        // 如果没有设定 cool-down，则默认为 0
         if (!peelerArgs.containsKey("--cool-down")) {
             peelerArgs.put("--cool-down", "0");
         }

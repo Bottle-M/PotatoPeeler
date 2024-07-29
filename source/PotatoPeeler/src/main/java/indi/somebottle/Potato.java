@@ -1,9 +1,11 @@
 package indi.somebottle;
 
-import indi.somebottle.core.RegionTaskDispatcher;
+import indi.somebottle.tasks.RegionTaskDispatcher;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
+import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
+import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
 import indi.somebottle.utils.RegionUtils;
 
 import java.io.File;
@@ -20,7 +22,7 @@ public class Potato {
      * @param verboseOutput     是否输出详细信息
      * @return 处理后的结果 PeelResult
      */
-    public static PeelResult peel(String worldPath, long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException, RegionTaskInterruptedException {
+    public static PeelResult peel(String worldPath, long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException {
         long sizeReduced = 0;
         long chunksRemoved = 0;
         long regionsAffected = 0;
