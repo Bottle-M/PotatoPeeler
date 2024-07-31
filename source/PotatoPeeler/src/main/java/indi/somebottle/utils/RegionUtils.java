@@ -32,10 +32,12 @@ public class RegionUtils {
                 if (files != null) {
                     for (File file : files) {
                         if (file.isDirectory()) {
+                            if (file.getName().equals("region")) {
+                                // 找到了 region 目录
+                                return Paths.get(file.getAbsolutePath());
+                            }
+                            // 否则继续寻找
                             pathQueue.add(Paths.get(file.getAbsolutePath()));
-                        } else if (file.getName().endsWith(".mca")) {
-                            // region 目录装有 .mca 文件则找到了
-                            return currPath;
                         }
                     }
                 }
@@ -85,6 +87,8 @@ public class RegionUtils {
                     if (sectorOffset == 0 && sectorsOccupied == 0) {
                         continue;
                     }
+                    // 继续读取区块
+
                 }
             }
             // TODO: 读取时间戳表到 Region 中
