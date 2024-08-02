@@ -14,9 +14,9 @@ public class ChunkUtils {
     /**
      * 区块数据部分的最大长度
      * <p> </p>
-     * 这其实是受限于区块整体占用的扇区数，最多只能有 255 个扇区，去掉头部表示实际长度的 4 字节，所以最多有 255*4096-4 字节。
+     * 这其实是受限于区块整体占用的扇区数，最多只能有 255 个扇区，去掉头部的 5 字节，所以最多有 255*4096-5 字节。
      */
-    public static final int MAX_CHUNK_DATA_LEN = 255 * 4096 - 4;
+    public static final int MAX_CHUNK_DATA_LEN = 255 * 4096 - 5;
 
     /**
      * nbt 二进制数据中的 InhabitedTime 标签部分的十六进制表示 <br>
@@ -43,11 +43,13 @@ public class ChunkUtils {
      * @param reader                mca 文件 RandomAccessFile 对象
      * @param offsetInFile          区块数据起始位置距离 Region 文件开头的偏移
      * @param sectorsOccupiedInFile 区块占用的扇区数
+     * @param x                     区块在区域内的局部坐标 x
+     * @param z                     区块在区域内的局部坐标 z
      * @return Chunk 对象
      * @throws RegionFormatException 当区块数据有误时抛出
      * @apiNote 注意：这个方法会改变 RandomAccessFile 的指针位置
      */
-    public static Chunk read(RandomAccessFile reader, long offsetInFile, int sectorsOccupiedInFile) throws IOException {
+    public static Chunk readChunk(RandomAccessFile reader, long offsetInFile, int sectorsOccupiedInFile, int x, int z) throws IOException {
         // 先把先前的指针位置备个份
         // 开一个 4 KiB × sectorsOccupiedInFile 的缓冲区
         // 最多会读取这么多数据
@@ -67,7 +69,10 @@ public class ChunkUtils {
         long chunkDataLen = NumUtils.bigEndianToLong(buffer, 4);
         // 因为这个是从压缩方式这一个字节开始算的，因此还要减去 1 字节
         chunkDataLen--;
-        // TODO：对于超出 MAX_CHUNK_DATA_LEN 的区块应当设定为 oversized，且不读取其 inhabitedTime。
+        if (chunkDataLen > MAX_CHUNK_DATA_LEN) {
+            // 对于超出 MAX_CHUNK_DATA_LEN 的区块应当设定为 overSized，且不读取其 inhabitedTime，直接返回
+            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, 0, true);
+        }
         // 继续读取 1 个字节，这个字节是压缩格式
         int compressionType = reader.read();
         if (compressionType < 0) {
@@ -76,9 +81,9 @@ public class ChunkUtils {
         }
         // 接下来把区块数据读入缓冲区
         // 此处 reader 指针已经指向区块数据起始字节
-
-
-        return null;
+        long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
+        // 构建新的区块对象
+        return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
     }
 
     /**
@@ -90,9 +95,9 @@ public class ChunkUtils {
      * @return 读取出的 InhabitedTime 数据（Long）
      * @throws IOException           如果读取失败会抛出此异常
      * @throws RegionFormatException 当区块数据有误，读取不到 InhabitedTime 时抛出
-     * @apiNote 请把 chunkReader 指针移动到开始读取的位置。注意，读取完毕后 chunkReader 指针应该在读取的最后一个字节处。
+     * @apiNote 调用前，请把 chunkReader 指针移动到开始读取的位置。注意，读取完毕后 chunkReader 指针应该在读取的最后一个字节处。
      */
-    public static long readInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
+    public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
         // TODO：其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
         // 用于进行字节匹配的指针
         int searchPtr = 0;

@@ -28,11 +28,11 @@ public class Chunk {
      */
     private final boolean overSized;
 
-    public Chunk(long offsetInFile, int sectorsOccupiedInFile, int x, int z, long inhabitedTime, boolean overSized) {
-        this.offsetInFile = offsetInFile;
-        this.sectorsOccupiedInFile = sectorsOccupiedInFile;
+    public Chunk(int x, int z, long offsetInFile, int sectorsOccupiedInFile, long inhabitedTime, boolean overSized) {
         this.x = x;
         this.z = z;
+        this.offsetInFile = offsetInFile;
+        this.sectorsOccupiedInFile = sectorsOccupiedInFile;
         this.inhabitedTime = inhabitedTime;
         this.overSized = overSized;
     }
@@ -89,5 +89,17 @@ public class Chunk {
      */
     public long getInhabitedTime() {
         return inhabitedTime;
+    }
+
+    @Override
+    public String toString() {
+        return "Chunk{" +
+                "offsetInFile=" + offsetInFile +
+                ", sectorsOccupiedInFile=" + sectorsOccupiedInFile +
+                ", x=" + x +
+                ", z=" + z +
+                ", inhabitedTime=" + inhabitedTime +
+                ", overSized=" + overSized +
+                '}';
     }
 }
