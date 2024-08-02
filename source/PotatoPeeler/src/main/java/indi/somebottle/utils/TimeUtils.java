@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-// 此类用于记录 Peeler 程序上次的运行时间，防止每次启动都执行一次
+/**
+ * 此类用于记录 Peeler 程序上次的运行时间，防止每次启动都执行一次
+ */
+
 public class TimeUtils {
     // 记录上次运行时间的文件
     private static File timeRecordFile = new File("./peeler.lrt");

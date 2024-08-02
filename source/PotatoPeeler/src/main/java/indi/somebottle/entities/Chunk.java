@@ -21,13 +21,29 @@ public class Chunk {
      * 此区块的 InhabitedTime （Tick）
      */
     private final long inhabitedTime;
+    /**
+     * 此区块是否超出了 255 个扇区（1020 KiB）的大小
+     * <p>
+     * 这种情况下区块会在另外的 c.<区块X坐标>.<区块Z坐标>.mcc 进行存储，本程序会忽略处理这么大的区块
+     */
+    private final boolean overSized;
 
-    public Chunk(long offsetInFile, int sectorsOccupiedInFile, int x, int z, long inhabitedTime) {
+    public Chunk(long offsetInFile, int sectorsOccupiedInFile, int x, int z, long inhabitedTime, boolean overSized) {
         this.offsetInFile = offsetInFile;
         this.sectorsOccupiedInFile = sectorsOccupiedInFile;
         this.x = x;
         this.z = z;
         this.inhabitedTime = inhabitedTime;
+        this.overSized = overSized;
+    }
+
+    /**
+     * 是否超出了 255 个扇区（1020 KiB）的大小
+     *
+     * @return 是否超出了 255 个扇区（1020 KiB）的大小
+     */
+    public boolean isOverSized() {
+        return overSized;
     }
 
     /**

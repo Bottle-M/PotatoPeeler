@@ -3,6 +3,7 @@ package indi.somebottle.utils;
 import indi.somebottle.entities.Region;
 import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.exceptions.RegionPosNotFoundException;
+import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -51,9 +52,10 @@ public class RegionUtils {
      *
      * @param regionFile 区域 .mca 文件对象
      * @return 读取到的 Region 对象
-     * @throws RegionPosNotFoundException 如果文件名字格式不正确会抛出此异常
-     * @throws IOException                如果文件读取失败会抛出此异常
-     * @throws RegionFormatException      如果 .mca 文件格式不正确会抛出此异常
+     * @throws RegionPosNotFoundException          如果文件名字格式不正确会抛出此异常
+     * @throws IOException                         如果文件读取失败会抛出此异常
+     * @throws RegionFormatException               如果 .mca 文件格式不正确会抛出此异常
+     * @throws CompressionTypeUnsupportedException 如果压缩类型不支持，会抛出此异常
      */
     public static Region read(File regionFile) throws RegionPosNotFoundException, IOException, RegionFormatException {
         Region region = new Region(regionFile);
@@ -76,7 +78,8 @@ public class RegionUtils {
                     // 偏移扇区数目按大端方式转换为整数
                     // 通过与 0xFF，先提升为 int（因为 Java 的 byte 是 8 bit 有符号数），因为是大端。首个 8 位左移 16 位组成数值的最高字节， 以此类推把各个字节移动到对应位置上，通过或运算组成最终数值
                     // 因为单位是扇区，再乘上 4 KiB 得到偏移字节数
-                    long sectorOffset = ((long) (buffer[0] & 0xFF) << 16 | (long) (buffer[1] & 0xFF) << 8 | (long) (buffer[2] & 0xFF)) * 4096;
+                    // long sectorOffset = ((long) (buffer[0] & 0xFF) << 16 | (long) (buffer[1] & 0xFF) << 8 | (long) (buffer[2] & 0xFF)) * 4096;
+                    long sectorOffset = NumUtils.bigEndianToLong(buffer, 3) * 4096;
                     // 接下来一个字节是此区块占用的扇区数
                     int sectorsOccupied = metaReader.read();
                     if (sectorsOccupied < 0) {
@@ -88,6 +91,8 @@ public class RegionUtils {
                         continue;
                     }
                     // 继续读取区块
+                    // TODO：单独给 Chunk 的读取开一个 RAF
+                    // TODO: 注意处理 RegionFormatException，信息中加上区块局部坐标
 
                 }
             }

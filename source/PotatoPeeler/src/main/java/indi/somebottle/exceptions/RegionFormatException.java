@@ -1,6 +1,8 @@
 package indi.somebottle.exceptions;
 
-public class RegionFormatException extends Exception {
+import java.io.IOException;
+
+public class RegionFormatException extends IOException {
     /**
      * 自定义异常：区域文件格式不正确
      *

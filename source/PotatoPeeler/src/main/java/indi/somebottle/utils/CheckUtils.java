@@ -1,6 +1,8 @@
 package indi.somebottle.utils;
 
-// 此类用于承载一些用于检查的方法
+/**
+ * 此类用于承载一些用于检查的方法
+ */
 public class CheckUtils {
     /**
      * 检查字串是否能解析成整数
