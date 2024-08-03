@@ -7,7 +7,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: 在 RegionUtils 里写 save / read 方法
 public class Region {
     // 此区域的文件对象
     private final File regionFile;

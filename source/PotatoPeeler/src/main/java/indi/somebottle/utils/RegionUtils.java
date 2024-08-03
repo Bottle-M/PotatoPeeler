@@ -58,7 +58,7 @@ public class RegionUtils {
      * @throws CompressionTypeUnsupportedException 如果压缩类型不支持，会抛出此异常
      */
     public static Region readRegion(File regionFile, boolean verbose) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
-        // TODO：读取区块时的 Verbose 输出
+        // TODO：待测试 GZip, LZ4, 无压缩情况下的区块读取
         Region region = new Region(regionFile);
         if (verbose) {
             System.out.println("Reading region file: " + regionFile.getName());
@@ -128,4 +128,6 @@ public class RegionUtils {
         }
         return region;
     }
+
+    // TODO：把区块写回时需要建立 checksum 文件存放 CRC32 摘要
 }

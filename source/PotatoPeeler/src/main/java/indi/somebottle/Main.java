@@ -4,11 +4,11 @@ import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
 import indi.somebottle.utils.ArgsUtils;
+import indi.somebottle.utils.JarUtils;
 import indi.somebottle.utils.TimeUtils;
 import indi.somebottle.utils.ExceptionUtils;
 
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -75,7 +75,7 @@ public class Main {
         }
         // 计算自上次运行过去了多久
         long timeSinceLastRun = TimeUtils.timeNow() - TimeUtils.getLastRunTime();
-        if (worldDirPaths.size() == 0) {
+        if (worldDirPaths.isEmpty()) {
             // 没有世界可处理，则跳过 Peeler
             System.out.println("====== POTATO-PEELER SKIPPED ======");
             System.out.println("No world to process.");
@@ -122,31 +122,18 @@ public class Main {
             System.out.println("No --server-jar specified, exiting normally.");
             System.exit(0);
         }
+        // 启动服务器前先回收没有用的资源
+        System.gc();
         // 如果指定了 --server-jar，就尝试启动 Minecraft 服务器
-        List<String> launchCommand = new ArrayList<>();
-        launchCommand.add("java");
-        // 继承 JVM 参数
-        launchCommand.addAll(jvmArgs);
-        // 指定服务端 jar 文件
-        launchCommand.add(peelerArgs.get("--server-jar"));
-        // 把剩余参数添加上去
-        launchCommand.addAll(remainingArgs);
+        String serverJarPath = peelerArgs.get("--server-jar");
         // 开启启动 Minecraft 服务器
         System.out.println("====== LAUNCHING MINECRAFT SERVER ======");
-        // 执行启动命令
-        ProcessBuilder processBuilder = new ProcessBuilder(launchCommand);
-        // 继承标准输入输出
-        processBuilder.inheritIO();
-        // 等待服务器进程完成，返回状态码
         try {
-            int status = processBuilder.start().waitFor();
-            if (status != 0) {
-                // 服务器进程退出不正常
-                System.out.println("Minecraft server process exited not gracefully, status code: " + status);
-            }
-            System.exit(status);
+            // 在当前 JVM 中载入服务端 jar 并执行主类程序
+            // 同时也传入了剩余参数 remainingArgs
+            JarUtils.runJarInCurrentJVM(serverJarPath, remainingArgs.toArray(new String[0]));
         } catch (Exception e) {
-            ExceptionUtils.print(e);
+            ExceptionUtils.print(e, "Exception occurred when launching Minecraft server: " + serverJarPath);
             e.printStackTrace();
             System.exit(1);
         }

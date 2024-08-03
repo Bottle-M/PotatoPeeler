@@ -12,7 +12,7 @@ public class ArgsUtils {
 
     // 初始化参数
     static {
-        // Minecraft 服务器世界目录路径，可以有多个（分号分隔）
+        // Minecraft 服务器世界目录路径，可以有多个（逗号分隔）
         PEELER_ARGS.put("--world-dirs", true);
         // Minecraft 服务端 jar 包路径
         PEELER_ARGS.put("--server-jar", true);
@@ -31,16 +31,16 @@ public class ArgsUtils {
     }
 
     /**
-     * 按分号分隔 worldDirs 参数，得到多个路径
+     * 按逗号分隔 worldDirs 参数，得到多个路径
      *
-     * @param worldDirs 分号分隔的世界目录路径
+     * @param worldDirs 逗号分隔的世界目录路径
      * @return 多个世界目录路径 List<String>
      */
     public static List<String> parseWorldDirs(String worldDirs) {
         List<String> worldDirList = new ArrayList<>();
-        String[] dirs = worldDirs.split(";");
+        String[] dirs = worldDirs.split(",");
         for (String dir : dirs) {
-            if (dir.trim().length() == 0) {
+            if (dir.trim().isEmpty()) {
                 // 空字符串不计入
                 continue;
             }

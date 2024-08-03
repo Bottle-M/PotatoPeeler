@@ -71,7 +71,7 @@ public class ChunkUtils {
         chunkDataLen--;
         if (chunkDataLen > MAX_CHUNK_DATA_LEN) {
             // 对于超出 MAX_CHUNK_DATA_LEN 的区块应当设定为 overSized，且不读取其 inhabitedTime，直接返回
-            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, 0, true);
+            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, -1, true);
         }
         // 继续读取 1 个字节，这个字节是压缩格式
         int compressionType = reader.read();
@@ -98,7 +98,7 @@ public class ChunkUtils {
      * @apiNote 调用前，请把 chunkReader 指针移动到开始读取的位置。注意，读取完毕后 chunkReader 指针应该在读取的最后一个字节处。
      */
     public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
-        // TODO：其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
+        // 其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
         // 用于进行字节匹配的指针
         int searchPtr = 0;
         try (ChunkDataInputStream cdis = new ChunkDataInputStream(chunkReader, dataLen, compressionType)) {

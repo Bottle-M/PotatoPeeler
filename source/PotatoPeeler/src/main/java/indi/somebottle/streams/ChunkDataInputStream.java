@@ -103,7 +103,7 @@ public class ChunkDataInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         if (inputStream == null) {
-            // 如果没有 lz4 流，先检查缓冲区有没有数据
+            // 如果没有流，先检查缓冲区有没有数据
             if (isBufferEmpty()) {
                 // 缓冲区内没有更多数据可读了
                 // 检查能不能从文件中读入更多数据
@@ -112,12 +112,12 @@ public class ChunkDataInputStream extends InputStream {
                     return -1;
                 }
             }
-            // 把缓冲区现有数据读入
+            // 把缓冲区现有数据读入新流
             inputStream = InputStreamFactory.getStream(compressionType, getBufferByteStream());
         }
         int readByte = inputStream.read();
         if (readByte == -1) {
-            // 如果读完了，关闭 lz4 流，重试一次 read
+            // 如果读完了，关闭流，重试一次 read
             inputStream.close();
             inputStream = null;
             return read();
