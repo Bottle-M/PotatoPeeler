@@ -103,9 +103,14 @@ public class RegionUtils {
                         continue;
                     }
                     // 继续读取区块
-                    Chunk chunk = ChunkUtils.readChunk(chunkReader, chunkOffset, sectorsOccupied, x, z);
-                    // 初始化区域对象中的区块结构
-                    region.initChunkAt(x, z, chunk);
+                    try {
+                        Chunk chunk = ChunkUtils.readChunk(chunkReader, chunkOffset, sectorsOccupied, x, z);
+                        // 初始化区域对象中的区块结构
+                        region.initChunkAt(x, z, chunk);
+                    } catch (RegionFormatException e) {
+                        // 在 RegionFormatException 的信息中添加 Region 信息后重新抛出
+                        throw new RegionFormatException(e.getMessage() + " in Region " + regionFile.getName());
+                    }
                 }
             }
             // 读取时间戳表到 Region 中

@@ -19,7 +19,7 @@ public class RegionTaskRunner implements Runnable {
 
     @Override
     public void run() {
-        // 队列非空时不断取出
+        // 队列非空时不断取出进行处理
         while (!Thread.currentThread().isInterrupted() && !queue.isEmpty()) {
             // 队列有任务时就取出进行处理
             File mcaFile = queue.poll();

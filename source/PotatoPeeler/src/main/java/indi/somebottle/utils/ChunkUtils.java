@@ -62,7 +62,7 @@ public class ChunkUtils {
         byteRead = reader.read(buffer, 0, 4);
         if (byteRead < 4) {
             // 读取失败
-            throw new RegionFormatException("Chunk data error: unable to read chunk data length.");
+            throw new RegionFormatException("Chunk data error: unable to read data length of chunk (" + x + ", " + z + ")");
         }
         // 按大端方式转换为整数，因为有 4 个字节，而 Java 没有无符号数，这里需要用 long 进行存储
         // long chunkDataLen = (long) (buffer[0] & 0xFF) << 24 | (long) (buffer[1] & 0xFF) << 16 | (long) (buffer[2] & 0xFF) << 8 | (long) (buffer[3] & 0xFF);
@@ -77,13 +77,18 @@ public class ChunkUtils {
         int compressionType = reader.read();
         if (compressionType < 0) {
             // 读取失败
-            throw new RegionFormatException("Chunk data error: unable to read compression type.");
+            throw new RegionFormatException("Chunk data error: unable to read compression type of chunk (" + x + ", " + z + ")");
         }
         // 接下来把区块数据读入缓冲区
-        // 此处 reader 指针已经指向区块数据起始字节
-        long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
-        // 构建新的区块对象
-        return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
+        try {
+            // 此处 reader 指针已经指向区块数据起始字节
+            long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
+            // 构建新的区块对象
+            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
+        } catch (RegionFormatException e) {
+            // 发生 RegionFormatException 后加上区块坐标信息
+            throw new RegionFormatException(e.getMessage() + " in chunk (" + x + ", " + z + ")");
+        }
     }
 
     /**
@@ -127,12 +132,12 @@ public class ChunkUtils {
                         return NumUtils.bigEndianToLong(numBuf, 8);
                     } else {
                         // 否则读取失败
-                        throw new RegionFormatException("InhabitedTime was found, but no enough bytes to read.");
+                        throw new RegionFormatException("InhabitedTime was found, but no enough bytes to read");
                     }
                 }
             }
         }
         // 没有找到
-        throw new RegionFormatException("InhabitedTime not found in chunk data.");
+        throw new RegionFormatException("InhabitedTime not found in chunk data");
     }
 }
