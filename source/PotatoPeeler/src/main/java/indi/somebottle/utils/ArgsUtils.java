@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ArgsUtils {
     // 定义 PotatoPeeler 能用到的参数 <参数名, 是否要指定值>
-    public final static HashMap<String, Boolean> PEELER_ARGS = new HashMap<String, Boolean>();
+    public final static HashMap<String, Boolean> PEELER_ARGS = new HashMap<>();
 
     // 初始化参数
     static {
@@ -18,8 +18,8 @@ public class ArgsUtils {
         PEELER_ARGS.put("--server-jar", true);
         // InhabitedTime 阈值，低于此值的区块会被移除，单位：tick
         PEELER_ARGS.put("--min-inhabited", true);
-        // .mca 文件在创建后多久才能被删除，单位：分钟
-        PEELER_ARGS.put("--mca-deletable-delay", true);
+        // .mca 文件在创建后多久才能被修改，单位：分钟
+        PEELER_ARGS.put("--mca-modifiable-delay", true);
         // 是否详细输出区块处理情况
         PEELER_ARGS.put("--verbose", false);
         // 是否跳过本次处理
@@ -69,8 +69,8 @@ public class ArgsUtils {
             System.out.println("PotatoPeeler parameter --cool-down must be >= 0.");
             return false;
         }
-        if (!CheckUtils.isInt(peelerArgs.get("--mca-deletable-delay"))) {
-            System.out.println("PotatoPeeler parameter --mca-deletable-delay must be an integer.");
+        if (!CheckUtils.isInt(peelerArgs.get("--mca-modifiable-delay"))) {
+            System.out.println("PotatoPeeler parameter --mca-modifiable-delay must be an integer.");
             return false;
         }
         if (!CheckUtils.isInt(peelerArgs.get("--threads-num"))) {
@@ -99,9 +99,9 @@ public class ArgsUtils {
         if (!peelerArgs.containsKey("--cool-down")) {
             peelerArgs.put("--cool-down", "0");
         }
-        // 如果没有设定 mcaDeletableDelay，则默认为 0
-        if (!peelerArgs.containsKey("--mca-deletable-delay")) {
-            peelerArgs.put("--mca-deletable-delay", "0");
+        // 如果没有设定 mcaModifiableDelay，则默认为 0
+        if (!peelerArgs.containsKey("--mca-modifiable-delay")) {
+            peelerArgs.put("--mca-modifiable-delay", "0");
         }
         // 如果没有指定线程数，默认为 10
         if (!peelerArgs.containsKey("--threads-num")) {

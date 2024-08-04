@@ -10,7 +10,10 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-public class InputStreamFactory {
+/**
+ * 解压缩流静态工厂
+ */
+public class DecompressedInputStreamFactory {
     /**
      * 根据压缩类型获取区块数据读取器实例
      *

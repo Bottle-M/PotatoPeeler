@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 // 此类用于把 .mca 文件分配给多个线程进行处理
 public class RegionTaskDispatcher {
     private final long minInhabited;
-    private final long mcaDeletableDelay;
+    private final long mcaModifiableDelay;
     private final int threadsNum;
     private final boolean verboseOutput;
     private final ExecutorService executor;
@@ -25,9 +25,9 @@ public class RegionTaskDispatcher {
     // 标记是否已经开始运行任务
     private boolean started = false;
 
-    public RegionTaskDispatcher(long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) {
+    public RegionTaskDispatcher(long minInhabited, long mcaModifiableDelay, int threadsNum, boolean verboseOutput) {
         this.minInhabited = minInhabited;
-        this.mcaDeletableDelay = mcaDeletableDelay;
+        this.mcaModifiableDelay = mcaModifiableDelay;
         this.verboseOutput = verboseOutput;
         this.threadsNum = threadsNum;
         // 指定线程数初始化线程池
@@ -62,6 +62,7 @@ public class RegionTaskDispatcher {
         try {
             while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
                 // 空体, pass
+                // 等待所有线程执行完成
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -84,7 +85,7 @@ public class RegionTaskDispatcher {
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            executor.submit(new RegionTaskRunner(queues.get(i), minInhabited, mcaDeletableDelay, verboseOutput));
+            executor.submit(new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay, verboseOutput));
         }
         // 停止建立新的线程
         executor.shutdown();

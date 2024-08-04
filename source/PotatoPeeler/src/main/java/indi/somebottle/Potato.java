@@ -17,12 +17,12 @@ public class Potato {
      *
      * @param worldPath         世界目录路径
      * @param minInhabited      InhabitedTime 阈值
-     * @param mcaDeletableDelay 自 .mca 创建多久后能删除（分钟）
+     * @param mcaModifiableDelay 自 .mca 创建多久后能删除（分钟）
      * @param threadsNum        线程数
      * @param verboseOutput     是否输出详细信息
      * @return 处理后的结果 PeelResult
      */
-    public static PeelResult peel(String worldPath, long minInhabited, long mcaDeletableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException {
+    public static PeelResult peel(String worldPath, long minInhabited, long mcaModifiableDelay, int threadsNum, boolean verboseOutput) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException {
         long sizeReduced = 0;
         long chunksRemoved = 0;
         long regionsAffected = 0;
@@ -41,7 +41,7 @@ public class Potato {
         }
         // 找到 .mca 文件了则开始处理
         // 创建任务调度器
-        RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(minInhabited, mcaDeletableDelay, threadsNum, verboseOutput);
+        RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(minInhabited, mcaModifiableDelay, threadsNum, verboseOutput);
         // 把文件提交给任务调度器
         for (File mcaFile : mcaFiles) {
             dispatcher.addTask(mcaFile);

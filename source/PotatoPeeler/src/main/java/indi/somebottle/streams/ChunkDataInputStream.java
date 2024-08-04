@@ -35,7 +35,7 @@ public class ChunkDataInputStream extends InputStream {
      */
     public ChunkDataInputStream(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
         // 先把 RAF 包装成流，然后再用 InputStreamFactory 根据压缩类型获取解压流
-        this.inflatedStream = InputStreamFactory.getStream(compressionType, new RandomAccessInputStream(chunkReader, dataLen));
+        this.inflatedStream = DecompressedInputStreamFactory.getStream(compressionType, new RandomAccessInputStream(chunkReader, dataLen));
     }
 
     /**

@@ -57,7 +57,7 @@ public class Main {
         List<String> worldDirPaths = ArgsUtils.parseWorldDirs(peelerArgs.get("--world-dirs"));
         long minInhabited = Long.parseLong(peelerArgs.get("--min-inhabited"));
         long coolDown = Long.parseLong(peelerArgs.get("--cool-down"));
-        long mcaDeletableDelay = Long.parseLong(peelerArgs.get("--mca-deletable-delay"));
+        long mcaModifiableDelay = Long.parseLong(peelerArgs.get("--mca-modifiable-delay"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
         boolean verboseOutput = peelerArgs.containsKey("--verbose");
         boolean skipPeeler = peelerArgs.containsKey("--skip-peeler");
@@ -65,11 +65,19 @@ public class Main {
         System.out.println("====== POTATO-PEELER PARAMS ======");
         System.out.println("Min inhabited time (tick): " + minInhabited +
                 "\nCool down (min): " + coolDown +
-                "\nMCA deletable delay after creation (min): " + mcaDeletableDelay +
+                "\nMCA modifiable delay after creation (min): " + mcaModifiableDelay +
                 "\nWorker threads num: " + threadsNum +
                 "\nVerbose output: " + verboseOutput +
                 "\nSkip peeler: " + skipPeeler +
                 "\nWorld dir paths: ");
+        // 在 minInhabited > 200 时发出警告
+        if (minInhabited > 200) {
+            System.out.println("\n====== WARNING ======");
+            System.out.println("You are setting 'minInhabited' to a value greater than 200 ticks (10 seconds).");
+            System.out.println("This may cause some chunks to be removed even if they are currently in use.");
+            System.out.println("Please make sure you know what you are doing.");
+            System.out.println("=====================\n");
+        }
         for (String worldDirPath : worldDirPaths) {
             System.out.println("\t" + worldDirPath);
         }
@@ -96,7 +104,7 @@ public class Main {
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
-                    Potato.peel(worldDirPath, minInhabited, mcaDeletableDelay, threadsNum, verboseOutput);
+                    Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum, verboseOutput);
                     peeled = true;
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过

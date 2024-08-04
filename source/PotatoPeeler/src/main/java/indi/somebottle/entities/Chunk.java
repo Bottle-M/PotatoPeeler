@@ -28,6 +28,11 @@ public class Chunk {
      */
     private final boolean overSized;
 
+    /**
+     * 标记是否删除这个区块
+     */
+    private boolean deleteFlag = false;
+
     public Chunk(int x, int z, long offsetInFile, int sectorsOccupiedInFile, long inhabitedTime, boolean overSized) {
         this.x = x;
         this.z = z;
@@ -35,6 +40,24 @@ public class Chunk {
         this.sectorsOccupiedInFile = sectorsOccupiedInFile;
         this.inhabitedTime = inhabitedTime;
         this.overSized = overSized;
+    }
+
+    /**
+     * 获得删除标记
+     *
+     * @return 是否删除这个区块
+     */
+    public boolean isDeleteFlag() {
+        return deleteFlag;
+    }
+
+    /**
+     * 设置删除标记
+     *
+     * @param deleteFlag 是否删除这个区块
+     */
+    public void setDeleteFlag(boolean deleteFlag) {
+        this.deleteFlag = deleteFlag;
     }
 
     /**
