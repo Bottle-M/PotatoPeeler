@@ -98,6 +98,15 @@ public class Region {
     }
 
     /**
+     * 获得此区域的文件对象
+     *
+     * @return 文件对象
+     */
+    public File getRegionFile() {
+        return regionFile;
+    }
+
+    /**
      * 获得指定坐标区块最后被修改时间戳
      *
      * @param x 局部坐标 x

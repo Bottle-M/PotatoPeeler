@@ -13,7 +13,7 @@ public class NumUtils {
      * 字节序列按大端转换为数值（最高支持 8 字节）
      *
      * @param buf   存储字节序列的 byte[]
-     * @param width 数字占有几字节
+     * @param width 数字占有几字节（不可超过 8）
      * @return 数值
      */
     public static long bigEndianToLong(byte[] buf, int width) {
@@ -27,5 +27,21 @@ public class NumUtils {
             bufInd++;
         }
         return res;
+    }
+
+    /**
+     * 把 long 类型数值按 width 字节数转换为大端字节序列，存入 buf <br>
+     * （最高支持 8 字节）
+     *
+     * @param value long 类型数值
+     * @param buf   存储字节序列的 byte[]
+     * @param width 数字在 buf 中占有几字节（不可超过 8）
+     */
+    public static void longToBigEndian(long value, byte[] buf, int width) {
+        for (int i = width - 1; i >= 0; i--) {
+            // 从低位处理到高位，8 个位一组，与 0xFF 进行与运算，再右移对应位数
+            buf[i] = (byte) (value & 0xFF);
+            value >>= 8;
+        }
     }
 }

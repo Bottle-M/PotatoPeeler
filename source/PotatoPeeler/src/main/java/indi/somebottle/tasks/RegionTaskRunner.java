@@ -50,6 +50,10 @@ public class RegionTaskRunner implements Runnable {
             // 扫描区域所有现存区块，进行筛选
             List<Chunk> existingChunks = region.getExistingChunks();
             for (Chunk chunk : existingChunks) {
+                if (chunk.isOverSized()) {
+                    // 如果区块数据较多，就不进行删除
+                    continue;
+                }
                 if (chunk.getInhabitedTime() < minInhabited) {
                     // 如果区块的 inhabitedTime 小于阈值，就将其标记为待删除
                     chunk.setDeleteFlag(true);

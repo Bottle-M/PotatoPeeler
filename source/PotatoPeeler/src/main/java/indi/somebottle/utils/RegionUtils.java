@@ -10,6 +10,7 @@ import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -75,6 +76,11 @@ public class RegionUtils {
             byte[] buffer = new byte[4096];
             int byteRead = 0;
             // 一共有 1024 个区块的偏移和长度数据，逐个读取
+            /*
+             * 注意，如果你改变了这里的遍历顺序，那么底下 writeRegion 拷贝区块数据的逻辑就要重写。
+             *
+             * SomeBottle 2024.8.5
+             */
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
                     if (verbose) {
@@ -137,14 +143,102 @@ public class RegionUtils {
     // TODO：把区块写回时需要建立 checksum 文件存放 CRC32 摘要
 
     /**
-     * 把 Region 对象重新写入到文件中 <br>
+     * 把 Region 对象重新写入到指定文件 outputFile 中 <br>
      * 被标记为 deleted 的区块不会再被写入。
      *
-     * @param regionFile 区域文件对象
+     * @param region     区域对象
      * @param outputFile 输出文件对象
      * @param verbose    是否输出详细信息
+     * @throws RegionFormatException 如果 .mca 文件格式不正确会抛出此异常
+     * @throws IOException           IO 异常
      */
-    public static void writeRegion(File regionFile, File outputFile, boolean verbose) {
-
+    public static void writeRegion(Region region, File outputFile, boolean verbose) throws IOException, RegionFormatException {
+        File regionFile = region.getRegionFile();
+        if (verbose) {
+            System.out.println("Writing region to file: " + outputFile.getAbsolutePath());
+        }
+        try (
+                FileOutputStream fos = new FileOutputStream(outputFile);
+                BufferedOutputStream bos = new BufferedOutputStream(fos);
+                RandomAccessFile chunkReader = new RandomAccessFile(regionFile, "r")
+        ) {
+            if (verbose) {
+                System.out.println("\tWriting the first sector of the mca file.");
+            }
+            // 缓冲区
+            byte[] dataBuf = new byte[4096];
+            Chunk chunkTmp;
+            // 写入区块偏移和长度表
+            // 记录当前区块起始位置在 mca 文件中的偏移扇区数
+            int currChunkOffset = 2; // 初始为 2 个扇区
+            for (int x = 0; x < 32; x++) {
+                for (int z = 0; z < 32; z++) {
+                    chunkTmp = region.getChunkAt(x, z);
+                    if (chunkTmp == null || chunkTmp.isDeleteFlag()) {
+                        // 如果区块不存在，或者被标记为移除，直接写入 4 个零字节
+                        Arrays.fill(dataBuf, 0, 4, (byte) 0);
+                    } else {
+                        // 如果区块存在，写入偏移和长度
+                        // 偏移扇区数（3 字节大端）
+                        NumUtils.longToBigEndian(currChunkOffset, dataBuf, 3);
+                        // 再加 1 字节的占用扇区数
+                        int sectorsOccupied = chunkTmp.getSectorsOccupiedInFile();
+                        dataBuf[3] = (byte) sectorsOccupied;
+                        // 累加到扇区偏移上
+                        currChunkOffset += sectorsOccupied;
+                    }
+                    // 把每个区块的扇区偏移和占用扇区数写入
+                    bos.write(dataBuf, 0, 4);
+                }
+            }
+            if (verbose) {
+                System.out.println("\tWriting the second sector of the mca file.");
+            }
+            // 接着写入时间戳表
+            for (int x = 0; x < 32; x++) {
+                for (int z = 0; z < 32; z++) {
+                    chunkTmp = region.getChunkAt(x, z);
+                    if (chunkTmp == null || chunkTmp.isDeleteFlag()) {
+                        // 若区块不存在或被标记为已删除，时间戳 4 字节置 0
+                        Arrays.fill(dataBuf, 0, 4, (byte) 0);
+                    } else {
+                        // 否则把区块时间戳转换为大端 4 字节
+                        NumUtils.longToBigEndian(region.getChunkModifiedTimeAt(x, z), dataBuf, 4);
+                    }
+                    // 把每个区块的时间戳写入
+                    bos.write(dataBuf, 0, 4);
+                }
+            }
+            if (verbose) {
+                System.out.println("\tCopying chunk data.");
+            }
+            // 最后拷贝现存区块的数据
+            // 因为区块占用的空间实际上以扇区为单位，因此这里其实就是把原文件中区块对应的扇区复制过来
+            // 因为在记录现存区块时的扫描顺序也是 x:0-31, z:0-31，故 getExistingChunks 得到的列表
+            // 可以直接拿来用，可能不用再执行循环体 1024 次了
+            for (Chunk chunk : region.getExistingChunks()) {
+                // 跳过被移除的区块
+                if (chunk.isDeleteFlag())
+                    continue;
+                // 未被移除的区块直接把占用的扇区数据拷贝过来即可
+                // 需要读取 bytesRemaining 字节
+                long bytesRemaining = 4096L * chunk.getSectorsOccupiedInFile();
+                // 跳转到区块数据在原文件中的起始位置
+                chunkReader.seek(chunk.getOffsetInFile());
+                while (bytesRemaining > 0) {
+                    // 读取的字节数
+                    int bytesToRead = (int) Math.min(bytesRemaining, dataBuf.length);
+                    // 读取区块数据
+                    if (chunkReader.read(dataBuf, 0, bytesToRead) != bytesToRead) {
+                        throw new RegionFormatException("MCA File format error in " + regionFile.getName() + ", unable to copy chunk data, no enough bytes.");
+                    }
+                    // 写入到输出文件
+                    bos.write(dataBuf, 0, bytesToRead);
+                    // 更新剩余字节数
+                    bytesRemaining -= bytesToRead;
+                }
+            }
+        }
     }
 }
+
