@@ -1,13 +1,16 @@
 package indi.somebottle.utils;
 
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
+import indi.somebottle.logger.GlobalLogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class ArgsUtils {
-    // 定义 PotatoPeeler 能用到的参数 <参数名, 是否要指定值>
+    /**
+     * 定义 PotatoPeeler 能用到的参数 <参数名, 是否要指定值>
+     */
     public final static HashMap<String, Boolean> PEELER_ARGS = new HashMap<>();
 
     // 初始化参数
@@ -49,37 +52,43 @@ public class ArgsUtils {
         return worldDirList;
     }
 
+    /**
+     * 检查传递给 PotatoPeeler 的参数是否合法
+     *
+     * @param peelerArgs 传递给 PotatoPeeler 的参数
+     * @return 是否合法
+     */
     public static boolean checkPeelerArgs(HashMap<String, String> peelerArgs) {
         // 需要接收数字的参数无法被解析成数字则参数无效
         if (!CheckUtils.isInt(peelerArgs.get("--min-inhabited"))) {
-            System.out.println("PotatoPeeler parameter --min-inhabited must be an integer.");
+            GlobalLogger.warning("PotatoPeeler parameter --min-inhabited must be an integer.");
             return false;
         }
         if (Long.parseLong(peelerArgs.get("--min-inhabited")) < 0) {
             // 不能小于 0
-            System.out.println("PotatoPeeler parameter --min-inhabited must be >= 0.");
+            GlobalLogger.warning("PotatoPeeler parameter --min-inhabited must be >= 0.");
             return false;
         }
         if (!CheckUtils.isInt(peelerArgs.get("--cool-down"))) {
-            System.out.println("PotatoPeeler parameter --cool-down must be an integer.");
+            GlobalLogger.warning("PotatoPeeler parameter --cool-down must be an integer.");
             return false;
         }
         if (Long.parseLong(peelerArgs.get("--cool-down")) < 0) {
             // 不能小于 0
-            System.out.println("PotatoPeeler parameter --cool-down must be >= 0.");
+            GlobalLogger.warning("PotatoPeeler parameter --cool-down must be >= 0.");
             return false;
         }
         if (!CheckUtils.isInt(peelerArgs.get("--mca-modifiable-delay"))) {
-            System.out.println("PotatoPeeler parameter --mca-modifiable-delay must be an integer.");
+            GlobalLogger.warning("PotatoPeeler parameter --mca-modifiable-delay must be an integer.");
             return false;
         }
         if (!CheckUtils.isInt(peelerArgs.get("--threads-num"))) {
-            System.out.println("PotatoPeeler parameter --threads-num must be an integer.");
+            GlobalLogger.warning("PotatoPeeler parameter --threads-num must be an integer.");
             return false;
         }
         if (Long.parseLong(peelerArgs.get("--threads-num")) < 1) {
             // 不能小于 1
-            System.out.println("PotatoPeeler parameter --threads-num must be >= 1.");
+            GlobalLogger.warning("PotatoPeeler parameter --threads-num must be >= 1.");
             return false;
         }
         return true;

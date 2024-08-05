@@ -60,6 +60,7 @@ public class GlobalLogger {
         logger.fine(msg);
     }
 
+
     /**
      * 记录一条普通消息日志
      *

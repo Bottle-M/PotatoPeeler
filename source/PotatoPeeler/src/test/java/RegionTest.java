@@ -12,7 +12,7 @@ public class RegionTest {
         File regionFile = new File("C:\\Users\\58379\\Desktop\\r.-1.-1.mca.modified");
         try {
             long startTime = System.currentTimeMillis();
-            Region region = RegionUtils.readRegion(regionFile, false);
+            Region region = RegionUtils.readRegion(regionFile);
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println("读取耗时: " + timeElapsed + "ms");
             Chunk chunk00 = region.getChunkAt(6, 7);
@@ -29,7 +29,7 @@ public class RegionTest {
         File outputFile = new File("C:\\Users\\58379\\Desktop\\r.-1.-1.mca.modified");
         try {
             long startTime = System.currentTimeMillis();
-            Region region = RegionUtils.readRegion(regionFile, false);
+            Region region = RegionUtils.readRegion(regionFile);
             // 扫描区域所有现存区块，进行筛选
             List<Chunk> existingChunks = region.getExistingChunks();
             for (Chunk chunk : existingChunks) {
@@ -42,7 +42,7 @@ public class RegionTest {
                     chunk.setDeleteFlag(true);
                 }
             }
-            RegionUtils.writeRegion(region, outputFile, false);
+            RegionUtils.writeRegion(region, outputFile);
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println("处理耗时: " + timeElapsed + "ms");
         } catch (Exception e) {

@@ -3,7 +3,7 @@ package indi.somebottle.tasks;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.entities.Region;
-import indi.somebottle.utils.ExceptionUtils;
+import indi.somebottle.logger.GlobalLogger;
 import indi.somebottle.utils.RegionUtils;
 
 import java.io.File;
@@ -18,15 +18,13 @@ import java.util.Queue;
 public class RegionTaskRunner implements Runnable {
     private final long minInhabited;
     private final long mcaModifiableDelay;
-    private final boolean verboseOutput;
     private final Queue<File> queue; // 此线程独有的任务队列
     private final PeelResult taskResult = new PeelResult(); // 存储本线程任务结果
 
-    public RegionTaskRunner(Queue<File> queue, long minInhabited, long mcaModifiableDelay, boolean verboseOutput) {
+    public RegionTaskRunner(Queue<File> queue, long minInhabited, long mcaModifiableDelay) {
         this.queue = queue;
         this.minInhabited = minInhabited;
         this.mcaModifiableDelay = mcaModifiableDelay;
-        this.verboseOutput = verboseOutput;
     }
 
     /**
@@ -65,18 +63,18 @@ public class RegionTaskRunner implements Runnable {
             // 先读取 Region 文件
             Region region;
             try {
-                region = RegionUtils.readRegion(mcaFile, verboseOutput);
+                region = RegionUtils.readRegion(mcaFile);
             } catch (Exception e) {
                 // 读取失败时检查有没有 .mca.bak 文件，如果有就尝试读取 .mca.bak
-                ExceptionUtils.print(e, "Exception occurred while reading region file: " + mcaFile.getAbsolutePath());
+                GlobalLogger.severe("Exception occurred while reading region file: " + mcaFile.getAbsolutePath(), e);
                 // 检查有没有 .mca.bak 文件
                 if (backupFile.exists()) {
-                    System.out.println("Backup file found. Trying to read backup file: " + backupFile.getAbsolutePath());
+                    GlobalLogger.info("Backup file found. Trying to read backup file: " + backupFile.getAbsolutePath());
                     try {
                         // 如果有的话尝试读取 .mca.bak
-                        region = RegionUtils.readRegion(backupFile, verboseOutput);
+                        region = RegionUtils.readRegion(backupFile);
                     } catch (Exception ex) {
-                        ExceptionUtils.print(ex, "Exception occurred while reading backup region file: " + backupFile.getAbsolutePath());
+                        GlobalLogger.severe("Exception occurred while reading backup region file: " + backupFile.getAbsolutePath(), e);
                         continue;
                     }
                 } else {
@@ -94,9 +92,7 @@ public class RegionTaskRunner implements Runnable {
                 }
                 if (chunk.getInhabitedTime() < minInhabited) {
                     // 如果区块的 inhabitedTime 小于阈值，就将其标记为待删除
-                    if (verboseOutput) {
-                        System.out.println("Removed chunk at (" + chunk.getX() + "," + chunk.getZ() + ") in " + mcaFile.getName());
-                    }
+                    GlobalLogger.fine("Removed chunk at (" + chunk.getX() + "," + chunk.getZ() + ") in " + mcaFile.getName());
                     chunk.setDeleteFlag(true);
                     chunksRemoved++;
                     hasModified = true;
@@ -110,37 +106,37 @@ public class RegionTaskRunner implements Runnable {
             try {
                 // 先检查目标 backup 文件是否存在，若存在则移除
                 if (backupFile.exists() && !backupFile.delete()) {
-                    System.out.println("Failed to delete previous backup file: " + backupFile.getAbsolutePath());
+                    GlobalLogger.warning("Failed to delete previous backup file: " + backupFile.getAbsolutePath());
                     continue;
                 }
                 // 把原文件临时重命名为 .mca.bak
                 Files.move(originalMCAPath, backupMCAPath);
             } catch (IOException e) {
                 // 文件重命名失败
-                ExceptionUtils.print(e, "Failed to backup(rename) file:" + mcaFile.getAbsolutePath());
+                GlobalLogger.severe("Failed to backup(rename) file:" + mcaFile.getAbsolutePath(), e);
                 continue;
             }
             // TODO： 待测试：有个问题，区块长度在游戏保存后可能是有增长的，这样紧凑写入真的没问题吗
             // 把修改后的区域写回原 mcaFile
             try {
-                RegionUtils.writeRegion(region, mcaFile, verboseOutput);
+                RegionUtils.writeRegion(region, mcaFile);
             } catch (IOException e) {
                 // 写入失败，恢复备份
-                ExceptionUtils.print(e, "Failed to write modified region to file: " + mcaFile.getAbsolutePath() + ", restoring backup...");
+                GlobalLogger.severe("Failed to write modified region to file: " + mcaFile.getAbsolutePath() + ", restoring backup...", e);
                 try {
                     // 如果 mcaFile 存在则尝试删除
                     if (mcaFile.exists() && !mcaFile.delete()) {
-                        ExceptionUtils.print(e, "Failed to delete file: " + mcaFile.getAbsolutePath());
+                        GlobalLogger.severe("Failed to delete file: " + mcaFile.getAbsolutePath(), e);
                     }
                     Files.move(backupMCAPath, originalMCAPath);
                 } catch (IOException ex) {
-                    ExceptionUtils.print(ex, "Unexpected! Failed to restore backup file: " + backupMCAPath);
+                    GlobalLogger.severe("Unexpected! Failed to restore backup file: " + backupMCAPath, ex);
                     continue;
                 }
             }
             // 若成功写入则删除备份
             if (!backupFile.delete()) {
-                System.out.println("Failed to delete backup file: " + backupFile.getAbsolutePath());
+                GlobalLogger.warning("Failed to delete backup file: " + backupFile.getAbsolutePath());
             }
             // 统计
             sizeReduced += (originalLength - mcaFile.length());

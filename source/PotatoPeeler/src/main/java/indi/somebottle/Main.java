@@ -4,6 +4,7 @@ import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
+import indi.somebottle.logger.GlobalLogger;
 import indi.somebottle.utils.*;
 
 import java.lang.management.ManagementFactory;
@@ -12,8 +13,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        // TODO: verbose 和 ExceptionUtils 以及 print 都可以替换成 logger 实现
-        System.out.println("Potato Peeler starting...");
+        GlobalLogger.info("Potato Peeler starting...");
         // 获得 JVM 参数
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         // 初始化 PotatoPeeler 参数
@@ -25,26 +25,27 @@ public class Main {
             remainingArgs = ArgsUtils.stripPeelerArgs(args, peelerArgs);
         } catch (PeelerArgIncompleteException e) {
             // 说明命令行参数不完整，打印错误信息
-            ExceptionUtils.print(e);
+            GlobalLogger.severe(e.getMessage());
             System.exit(1);
         }
+        // 因为要设置日志记录级别，这里要先拿到 --verbose 选项
+        boolean verboseOutput = peelerArgs.containsKey("--verbose");
+        GlobalLogger.setVerbose(verboseOutput);
         // 先输出命令行参数
-        System.out.println("====== JVM ARGS ======");
+        GlobalLogger.fine("====== JVM ARGS ======");
         for (String arg : jvmArgs) {
-            System.out.print(arg + " ");
+            GlobalLogger.fine(arg + " ");
         }
-        System.out.println();
         // 再输出 PotatoPeeler 相关的参数
-        System.out.println("====== POTATO-PEELER ARGS ======");
+        GlobalLogger.fine("====== POTATO-PEELER ARGS ======");
         for (String arg : peelerArgs.keySet()) {
-            System.out.println(arg + " " + peelerArgs.get(arg));
+            GlobalLogger.fine(arg + " " + peelerArgs.get(arg));
         }
         // 最后是其他参数
-        System.out.println("====== OTHER ARGS ======");
+        GlobalLogger.fine("====== OTHER ARGS ======");
         for (String arg : remainingArgs) {
-            System.out.print(arg + " ");
+            GlobalLogger.fine(arg + " ");
         }
-        System.out.println();
         // ========== 开始进行参数检查 ==========
         if (!ArgsUtils.checkPeelerArgs(peelerArgs)) {
             // 有参数不合法则退出
@@ -58,71 +59,70 @@ public class Main {
         long coolDown = Long.parseLong(peelerArgs.get("--cool-down"));
         long mcaModifiableDelay = Long.parseLong(peelerArgs.get("--mca-modifiable-delay"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
-        boolean verboseOutput = peelerArgs.containsKey("--verbose");
         boolean skipPeeler = peelerArgs.containsKey("--skip-peeler");
         // 列出 PotatoPeeler 相关的参数
-        System.out.println("====== POTATO-PEELER PARAMS ======");
-        System.out.println("Min inhabited time (tick): " + minInhabited +
-                "\nCool down (min): " + coolDown +
-                "\nMCA modifiable delay after creation (min): " + mcaModifiableDelay +
-                "\nWorker threads num: " + threadsNum +
-                "\nVerbose output: " + verboseOutput +
-                "\nSkip peeler: " + skipPeeler +
-                "\nWorld dir paths: ");
+        GlobalLogger.info("====== POTATO-PEELER PARAMS ======");
+        GlobalLogger.info("Min inhabited time (tick): " + minInhabited);
+        GlobalLogger.info("Cool down (min): " + coolDown);
+        GlobalLogger.info("MCA modifiable delay after creation (min): " + mcaModifiableDelay);
+        GlobalLogger.info("Worker threads num: " + threadsNum);
+        GlobalLogger.info("Verbose output: " + verboseOutput);
+        GlobalLogger.info("Skip peeler: " + skipPeeler);
+        GlobalLogger.info("World dir paths: ");
+        for (String worldDirPath : worldDirPaths) {
+            GlobalLogger.info("\t" + worldDirPath);
+        }
         // 在 minInhabited > 200 时发出警告
         if (minInhabited > 200) {
-            System.out.println("\n====== WARNING ======");
-            System.out.println("You are setting 'minInhabited' to a value greater than 200 ticks (10 seconds).");
-            System.out.println("This may cause some chunks to be removed even if they are currently in use.");
-            System.out.println("Please make sure you know what you are doing.");
-            System.out.println("=====================\n");
-        }
-        for (String worldDirPath : worldDirPaths) {
-            System.out.println("\t" + worldDirPath);
+            GlobalLogger.warning("****** WARNING ******");
+            GlobalLogger.warning("You are setting 'minInhabited' to a value greater than 200 ticks (10 seconds).");
+            GlobalLogger.warning("This may cause some chunks to be removed even if they are currently in use.");
+            GlobalLogger.warning("Please make sure you know what you are doing.");
+            GlobalLogger.warning("*********************");
         }
         // 计算自上次运行过去了多久
         long timeSinceLastRun = TimeUtils.timeNow() - TimeUtils.getLastRunTime();
         if (worldDirPaths.isEmpty()) {
             // 没有世界可处理，则跳过 Peeler
-            System.out.println("====== POTATO-PEELER SKIPPED ======");
-            System.out.println("No world to process.");
+            GlobalLogger.info("====== POTATO-PEELER SKIPPED ======");
+            GlobalLogger.info("No world to process.");
         } else if (skipPeeler) {
             // 指定了跳过
-            System.out.println("====== POTATO-PEELER SKIPPED ======");
-            System.out.println("Skipped.");
+            GlobalLogger.info("====== POTATO-PEELER SKIPPED ======");
+            GlobalLogger.info("Skipped.");
         } else if (timeSinceLastRun <= coolDown * 60) {
             // 注意 coolDown 单位是分钟
             // 自上次运行后还处于冷却期
-            System.out.println("====== POTATO-PEELER SKIPPED ======");
-            System.out.println("Currently in cool down period, skipped.");
+            GlobalLogger.info("====== POTATO-PEELER SKIPPED ======");
+            GlobalLogger.info("Currently in cool down period, skipped.");
         } else {
             // 开始处理区块
-            System.out.println("====== POTATO-PEELER RUNNING ======");
+            GlobalLogger.info("====== POTATO-PEELER RUNNING ======");
             // 标记是否进行了处理
             boolean peeled = false;
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
-                    PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum, verboseOutput);
-                    System.out.println("====== POTATO-PEELER RESULT ======");
-                    System.out.println("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s" +
-                            "\nRegions affected: " + peelResult.getRegionsAffected() +
-                            "\nChunks removed: " + peelResult.getChunksRemoved());
-                    System.out.println("Size reduced: " + NumUtils.bytesToHumanReadable(peelResult.getSizeReduced()));
-                    System.out.println("=====================================");
+                    PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum);
+                    GlobalLogger.info("====== POTATO-PEELER RESULT ======");
+                    GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
+                    GlobalLogger.info("Regions affected: " + peelResult.getRegionsAffected());
+                    GlobalLogger.info("Chunks removed: " + peelResult.getChunksRemoved());
+                    GlobalLogger.info("Size reduced: " + NumUtils.bytesToHumanReadable(peelResult.getSizeReduced()));
+                    GlobalLogger.info("=====================================");
                     // 标记进行了处理
                     peeled = true;
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过
-                    ExceptionUtils.print(e, "Failed to process regions of world: " + worldDirPath + ", skipped.");
+                    GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", skipped.", e);
                 } catch (RegionTaskInterruptedException e) {
                     // 发生了区域处理被中断的异常
-                    ExceptionUtils.print(e, "Failed to process regions of world: " + worldDirPath + ", interrupted.");
+                    GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", interrupted.", e);
                     // 退出程序
                     System.exit(1);
                 } catch (Exception e) {
                     // 到这里如果捕捉到了未知的异常，则退出程序
-                    ExceptionUtils.print(e, "Unexpected exception!");
+                    GlobalLogger.severe("Unexpected exception!", e);
                     // 退出程序
                     System.exit(1);
                 }
@@ -133,7 +133,7 @@ public class Main {
         }
         // 处理完区块后若没有指定 server-jar 则退出
         if (!peelerArgs.containsKey("--server-jar")) {
-            System.out.println("No --server-jar specified, exiting normally.");
+            GlobalLogger.info("No --server-jar specified, exiting normally.");
             System.exit(0);
         }
         // 启动服务器前先回收没有用的资源
@@ -141,14 +141,13 @@ public class Main {
         // 如果指定了 --server-jar，就尝试启动 Minecraft 服务器
         String serverJarPath = peelerArgs.get("--server-jar");
         // 开启启动 Minecraft 服务器
-        System.out.println("====== LAUNCHING MINECRAFT SERVER ======");
+        GlobalLogger.info("====== LAUNCHING MINECRAFT SERVER ======");
         try {
             // 在当前 JVM 中载入服务端 jar 并执行主类程序
             // 同时也传入了剩余参数 remainingArgs
             JarUtils.runJarInCurrentJVM(serverJarPath, remainingArgs.toArray(new String[0]));
         } catch (Exception e) {
-            ExceptionUtils.print(e, "Exception occurred when launching Minecraft server: " + serverJarPath);
-            e.printStackTrace();
+            GlobalLogger.severe("Exception occurred when launching Minecraft server: " + serverJarPath, e);
             System.exit(1);
         }
     }

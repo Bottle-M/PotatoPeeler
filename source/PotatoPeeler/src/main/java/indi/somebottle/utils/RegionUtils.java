@@ -6,6 +6,7 @@ import indi.somebottle.exceptions.RegionChunkInitializedException;
 import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.exceptions.RegionPosNotFoundException;
 import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
+import indi.somebottle.logger.GlobalLogger;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -51,19 +52,16 @@ public class RegionUtils {
      * 从文件中读取 Region 数据
      *
      * @param regionFile 区域 .mca 文件对象
-     * @param verbose    是否输出详细信息
      * @return 读取到的 Region 对象
      * @throws RegionPosNotFoundException          如果文件名字格式不正确会抛出此异常
      * @throws IOException                         如果文件读取失败会抛出此异常
      * @throws RegionFormatException               如果 .mca 文件格式不正确会抛出此异常
      * @throws CompressionTypeUnsupportedException 如果压缩类型不支持，会抛出此异常
      */
-    public static Region readRegion(File regionFile, boolean verbose) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
+    public static Region readRegion(File regionFile) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
         // TODO：待测试 GZip, LZ4, 无压缩情况下的区块读取
         Region region = new Region(regionFile);
-        if (verbose) {
-            System.out.println("Reading region file: " + regionFile.getName());
-        }
+        GlobalLogger.fine("Reading region file: " + regionFile.getName());
         // regionStream 用于读取 .mca 文件头部元数据
         // chunkReader 用于读取区块数据
         try (
@@ -83,9 +81,7 @@ public class RegionUtils {
              */
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
-                    if (verbose) {
-                        System.out.println("\tReading chunk at " + x + ", " + z);
-                    }
+                    GlobalLogger.fine("\tReading chunk at " + x + ", " + z);
                     // 先读取距离文件起点的偏移扇区数目
                     // 前 3 B 是大端存储的偏移扇区数目
                     byteRead = regionStream.read(buffer, 0, 3);
@@ -148,23 +144,18 @@ public class RegionUtils {
      *
      * @param region     区域对象
      * @param outputFile 输出文件对象
-     * @param verbose    是否输出详细信息
      * @throws RegionFormatException 如果 .mca 文件格式不正确会抛出此异常
      * @throws IOException           IO 异常
      */
-    public static void writeRegion(Region region, File outputFile, boolean verbose) throws IOException, RegionFormatException {
+    public static void writeRegion(Region region, File outputFile) throws IOException, RegionFormatException {
         File regionFile = region.getRegionFile();
-        if (verbose) {
-            System.out.println("Writing region to file: " + outputFile.getAbsolutePath());
-        }
+        GlobalLogger.fine("Writing region to file: " + outputFile.getAbsolutePath());
         try (
                 FileOutputStream fos = new FileOutputStream(outputFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 RandomAccessFile chunkReader = new RandomAccessFile(regionFile, "r")
         ) {
-            if (verbose) {
-                System.out.println("\tWriting the first sector of the mca file.");
-            }
+            GlobalLogger.fine("\tWriting the first sector of the mca file.");
             // 缓冲区
             byte[] dataBuf = new byte[4096];
             Chunk chunkTmp;
@@ -191,9 +182,7 @@ public class RegionUtils {
                     bos.write(dataBuf, 0, 4);
                 }
             }
-            if (verbose) {
-                System.out.println("\tWriting the second sector of the mca file.");
-            }
+            GlobalLogger.fine("\tWriting the second sector of the mca file.");
             // 接着写入时间戳表
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
@@ -209,9 +198,7 @@ public class RegionUtils {
                     bos.write(dataBuf, 0, 4);
                 }
             }
-            if (verbose) {
-                System.out.println("\tCopying chunk data.");
-            }
+            GlobalLogger.fine("\tCopying chunk data.");
             // 最后拷贝现存区块的数据
             // 因为区块占用的空间实际上以扇区为单位，因此这里其实就是把原文件中区块对应的扇区复制过来
             // 因为在记录现存区块时的扫描顺序也是 x:0-31, z:0-31，故 getExistingChunks 得到的列表

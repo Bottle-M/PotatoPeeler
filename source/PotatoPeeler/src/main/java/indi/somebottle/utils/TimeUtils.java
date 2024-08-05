@@ -1,5 +1,7 @@
 package indi.somebottle.utils;
 
+import indi.somebottle.logger.GlobalLogger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +22,8 @@ public class TimeUtils {
                 // 读取上次运行的时间
                 lastRunTime = Long.parseLong(Files.readString(timeRecordFile.toPath()));
             } catch (IOException e) {
-                ExceptionUtils.print(e, "Failed to read last run time from file: " + timeRecordFile.getAbsolutePath());
+                GlobalLogger.severe("Failed to read last run time from file: " + timeRecordFile.getAbsolutePath(), e);
+                System.exit(1);
             }
         }
     }
@@ -43,7 +46,7 @@ public class TimeUtils {
         try {
             Files.writeString(timeRecordFile.toPath(), String.valueOf(lastRunTime));
         } catch (IOException e) {
-            ExceptionUtils.print(e, "Failed to write last run time to file: " + timeRecordFile.getAbsolutePath());
+            GlobalLogger.severe("Failed to write last run time to file: " + timeRecordFile.getAbsolutePath(), e);
         }
     }
 }

@@ -3,6 +3,7 @@ package indi.somebottle.tasks;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
 import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
+import indi.somebottle.logger.GlobalLogger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ public class RegionTaskDispatcher {
     private final long minInhabited;
     private final long mcaModifiableDelay;
     private final int threadsNum;
-    private final boolean verboseOutput;
     private final ExecutorService executor;
     // 存放 .mca 文件对象的队列
     // 每个线程都有一个
@@ -28,10 +28,9 @@ public class RegionTaskDispatcher {
     // 标记是否已经开始运行任务
     private boolean started = false;
 
-    public RegionTaskDispatcher(long minInhabited, long mcaModifiableDelay, int threadsNum, boolean verboseOutput) {
+    public RegionTaskDispatcher(long minInhabited, long mcaModifiableDelay, int threadsNum) {
         this.minInhabited = minInhabited;
         this.mcaModifiableDelay = mcaModifiableDelay;
-        this.verboseOutput = verboseOutput;
         this.threadsNum = threadsNum;
         // 指定线程数初始化线程池
         this.executor = Executors.newFixedThreadPool(threadsNum);
@@ -68,7 +67,7 @@ public class RegionTaskDispatcher {
                 // 等待所有线程执行完成
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            GlobalLogger.severe("Interrupted while waiting for .mca files to be processed.", e);
             executor.shutdownNow();
             return false;
         }
@@ -102,7 +101,7 @@ public class RegionTaskDispatcher {
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay, verboseOutput);
+            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay);
             taskRunners.add(runner);
             executor.submit(runner);
         }
