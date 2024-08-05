@@ -220,6 +220,11 @@ public class RegionUtils {
                 // 跳过被移除的区块
                 if (chunk.isDeleteFlag())
                     continue;
+                /*
+                    因为区块占用的空间是扇区（4 KiB）的整数倍，因此拷贝的时候也可以直接以扇区为单位进行拷贝。
+
+                    SomeBottle 2024.8.5
+                 */
                 // 未被移除的区块直接把占用的扇区数据拷贝过来即可
                 // 需要读取 bytesRemaining 字节
                 long bytesRemaining = 4096L * chunk.getSectorsOccupiedInFile();

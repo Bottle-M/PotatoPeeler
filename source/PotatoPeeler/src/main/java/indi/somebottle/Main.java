@@ -1,12 +1,10 @@
 package indi.somebottle;
 
+import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
-import indi.somebottle.utils.ArgsUtils;
-import indi.somebottle.utils.JarUtils;
-import indi.somebottle.utils.TimeUtils;
-import indi.somebottle.utils.ExceptionUtils;
+import indi.somebottle.utils.*;
 
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -14,6 +12,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        // TODO: verbose 和 ExceptionUtils 以及 print 都可以替换成 logger 实现
         System.out.println("Potato Peeler starting...");
         // 获得 JVM 参数
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -104,7 +103,14 @@ public class Main {
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
-                    Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum, verboseOutput);
+                    PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum, verboseOutput);
+                    System.out.println("====== POTATO-PEELER RESULT ======");
+                    System.out.println("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s" +
+                            "\nRegions affected: " + peelResult.getRegionsAffected() +
+                            "\nChunks removed: " + peelResult.getChunksRemoved());
+                    System.out.println("Size reduced: " + NumUtils.bytesToHumanReadable(peelResult.getSizeReduced()));
+                    System.out.println("=====================================");
+                    // 标记进行了处理
                     peeled = true;
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过

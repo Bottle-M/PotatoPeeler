@@ -22,4 +22,9 @@ public class NumTest {
         int val = 255;
         System.out.printf("%02x", (byte) val);
     }
+
+    @Test
+    public void bytesToHumanReadable(){
+        System.out.println(NumUtils.bytesToHumanReadable(1024L*1024+1024L+4));
+    }
 }

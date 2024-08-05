@@ -1,5 +1,6 @@
 package indi.somebottle.tasks;
 
+import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
 import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
 
@@ -20,6 +21,8 @@ public class RegionTaskDispatcher {
     // 存放 .mca 文件对象的队列
     // 每个线程都有一个
     private final List<Queue<File>> queues = new ArrayList<>();
+    // Runner 列表
+    private final List<RegionTaskRunner> taskRunners = new ArrayList<>();
     // 记录上次把任务加入到哪个下标的队列中了
     private int enqueueIndex = 0;
     // 标记是否已经开始运行任务
@@ -73,6 +76,20 @@ public class RegionTaskDispatcher {
     }
 
     /**
+     * 获得任务执行的统计结果
+     *
+     * @return PeelResult 对象
+     */
+    public PeelResult getResult() {
+        PeelResult res = new PeelResult();
+        for (RegionTaskRunner runner : taskRunners) {
+            // 累加结果
+            res.add(runner.getTaskResult());
+        }
+        return res;
+    }
+
+    /**
      * 启动所有的工作线程，开始处理 .mca 文件
      *
      * @throws RegionTaskAlreadyStartedException 如果在启动执行后尝试再次启动则会抛出
@@ -85,7 +102,9 @@ public class RegionTaskDispatcher {
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            executor.submit(new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay, verboseOutput));
+            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay, verboseOutput);
+            taskRunners.add(runner);
+            executor.submit(runner);
         }
         // 停止建立新的线程
         executor.shutdown();

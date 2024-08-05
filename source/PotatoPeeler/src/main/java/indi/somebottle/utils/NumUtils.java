@@ -8,6 +8,13 @@ public class NumUtils {
      * 大端 8 字节无符号数转换时各字节左移的位数
      */
     private static final int[] BIG_ENDIAN_SHIFTS = {56, 48, 40, 32, 24, 16, 8, 0};
+    /**
+     * 1TiB 的字节数，下方依此类推
+     */
+    private static final long BYTES_PER_TIB = 1L << 40;
+    private static final long BYTES_PER_GIB = 1L << 30;
+    private static final long BYTES_PER_MIB = 1L << 20;
+    private static final long BYTES_PER_KIB = 1L << 10;
 
     /**
      * 字节序列按大端转换为数值（最高支持 8 字节）
@@ -43,5 +50,35 @@ public class NumUtils {
             buf[i] = (byte) (value & 0xFF);
             value >>= 8;
         }
+    }
+
+    /**
+     * 把字节转换为人类可读的格式（TiB, GiB, MiB, KiB, Bytes）
+     *
+     * @param bytes 字节数
+     * @return 人类可读的字节格式
+     */
+    public static String bytesToHumanReadable(long bytes) {
+        StringBuilder sb = new StringBuilder();
+        if (bytes >= BYTES_PER_TIB) {
+            sb.append(bytes / BYTES_PER_TIB).append(" TiB ");
+            bytes %= BYTES_PER_TIB;
+        }
+        if (bytes >= BYTES_PER_GIB) {
+            sb.append(bytes / BYTES_PER_GIB).append(" GiB ");
+            bytes %= BYTES_PER_GIB;
+        }
+        if (bytes >= BYTES_PER_MIB) {
+            sb.append(bytes / BYTES_PER_MIB).append(" MiB ");
+            bytes %= BYTES_PER_MIB;
+        }
+        if (bytes >= BYTES_PER_KIB) {
+            sb.append(bytes / BYTES_PER_KIB).append(" KiB ");
+            bytes %= BYTES_PER_KIB;
+        }
+        if (bytes > 0 || sb.isEmpty()) {
+            sb.append(bytes).append(" Bytes");
+        }
+        return sb.toString().trim();
     }
 }
