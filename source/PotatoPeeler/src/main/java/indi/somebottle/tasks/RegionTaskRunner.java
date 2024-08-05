@@ -119,6 +119,7 @@ public class RegionTaskRunner implements Runnable {
             // TODO： 待测试：有个问题，区块长度在游戏保存后可能是有增长的，这样紧凑写入真的没问题吗
             // 把修改后的区域写回原 mcaFile
             try {
+                // TODO: no enough bytes 问题待解决
                 RegionUtils.writeRegion(region, mcaFile);
             } catch (IOException e) {
                 // 写入失败，恢复备份
@@ -131,8 +132,8 @@ public class RegionTaskRunner implements Runnable {
                     Files.move(backupMCAPath, originalMCAPath);
                 } catch (IOException ex) {
                     GlobalLogger.severe("Unexpected! Failed to restore backup file: " + backupMCAPath, ex);
-                    continue;
                 }
+                continue;
             }
             // 若成功写入则删除备份
             if (!backupFile.delete()) {

@@ -112,6 +112,7 @@ public class Main {
                     // 对于每个世界都进行处理
                     PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum);
                     GlobalLogger.info("====== POTATO-PEELER RESULT ======");
+                    // TODO： 因为这里涉及多线程处理，时间不能直接累加
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
                     GlobalLogger.info("Regions affected: " + peelResult.getRegionsAffected());
                     GlobalLogger.info("Chunks removed: " + peelResult.getChunksRemoved());

@@ -13,11 +13,24 @@ public class LoggerFormatter extends Formatter {
 
     @Override
     public String format(LogRecord record) {
-        return "[PotatoPeeler] " + dateFormatter.format(new Date(record.getMillis())) +
-                " [" +
-                record.getLevel().getLocalizedName() +
-                "] " +
-                record.getMessage() +
-                System.lineSeparator();
+        StringBuilder sb = new StringBuilder("[PotatoPeeler] ");
+        sb.append(dateFormatter.format(new Date(record.getMillis())))
+                .append(" [")
+                .append(record.getLevel().getLocalizedName())
+                .append("] ")
+                .append(record.getMessage());
+        if (record.getThrown() != null) {
+            // 本条日志附带有 Exception
+            sb.append("\n");
+            sb.append(record.getThrown().toString());
+            StackTraceElement[] stackTraceElements = record.getThrown().getStackTrace();
+            for (StackTraceElement element : stackTraceElements) {
+                sb.append("\n");
+                sb.append("\tat ");
+                sb.append(element.toString());
+            }
+        }
+        sb.append(System.lineSeparator());
+        return sb.toString();
     }
 }

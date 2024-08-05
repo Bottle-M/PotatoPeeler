@@ -136,8 +136,6 @@ public class RegionUtils {
         return region;
     }
 
-    // TODO：把区块写回时需要建立 checksum 文件存放 CRC32 摘要
-
     /**
      * 把 Region 对象重新写入到指定文件 outputFile 中 <br>
      * 被标记为 deleted 的区块不会再被写入。
