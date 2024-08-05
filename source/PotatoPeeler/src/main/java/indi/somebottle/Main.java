@@ -13,7 +13,6 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        GlobalLogger.info("Potato Peeler starting...");
         // 获得 JVM 参数
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         // 初始化 PotatoPeeler 参数
@@ -26,11 +25,19 @@ public class Main {
         } catch (PeelerArgIncompleteException e) {
             // 说明命令行参数不完整，打印错误信息
             GlobalLogger.severe(e.getMessage());
+            GlobalLogger.severe("Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
             System.exit(1);
+        }
+        // 可能只需要打印帮助信息
+        boolean helpNeeded = peelerArgs.containsKey("--help");
+        if (helpNeeded) {
+            printHelp();
+            System.exit(0);
         }
         // 因为要设置日志记录级别，这里要先拿到 --verbose 选项
         boolean verboseOutput = peelerArgs.containsKey("--verbose");
         GlobalLogger.setVerbose(verboseOutput);
+        GlobalLogger.info("Potato Peeler starting...");
         // 先输出命令行参数
         GlobalLogger.fine("====== JVM ARGS ======");
         for (String arg : jvmArgs) {
@@ -47,12 +54,12 @@ public class Main {
             GlobalLogger.fine(arg + " ");
         }
         // ========== 开始进行参数检查 ==========
+        // 给没有指定的参数标上默认值
+        ArgsUtils.setDefaultPeelerArgs(peelerArgs);
         if (!ArgsUtils.checkPeelerArgs(peelerArgs)) {
             // 有参数不合法则退出
             System.exit(1);
         }
-        // 给没有指定的参数标上默认值
-        ArgsUtils.setDefaultPeelerArgs(peelerArgs);
         // 解析参数值
         List<String> worldDirPaths = ArgsUtils.parseWorldDirs(peelerArgs.get("--world-dirs"));
         long minInhabited = Long.parseLong(peelerArgs.get("--min-inhabited"));
@@ -150,5 +157,33 @@ public class Main {
             GlobalLogger.severe("Exception occurred when launching Minecraft server: " + serverJarPath, e);
             System.exit(1);
         }
+    }
+
+    /**
+     * 打印帮助信息，当命令行选项有 --help 时执行
+     */
+    public static void printHelp() {
+        System.out.println("Potato Peeler - A simple tool to remove unused chunks from Minecraft worlds.");
+        System.out.println();
+        System.out.println("Author: github.com/SomeBottle");
+        System.out.println();
+        System.out.println("Usage: java -jar [jvm-options] PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...] [--server-jar <server.jar>]");
+        System.out.println();
+        System.out.println("Options:");
+        System.out.println("  --min-inhabited <ticks>          Minimum inhabited time (in ticks) for a chunk to be considered unused. (default: 0)");
+        System.out.println("  --cool-down <minutes>            Cool down period (in minutes) after the last run before Potato Peeler can run again. (default: 0)");
+        System.out.println("  --mca-modifiable-delay <minutes> Delay (in minutes) after the creation of an MCA file before the chunks of it can be removed. (default: 0)");
+        System.out.println("  --threads-num <number>           Number of worker threads to use. (default: 10)");
+        System.out.println("  --verbose                        Enable verbose output.");
+        System.out.println("  --skip-peeler                    Skip the Potato Peeler process.");
+        System.out.println("  --help                           Show this help message and exit.");
+        System.out.println("  --server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
+        System.out.println();
+        System.out.println("Example:");
+        System.out.println("  java -jar -Xmx 4G PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
+        System.out.println();
+        System.out.println("Note:");
+        System.out.println("  - The world directories should be separated by commas without spaces.");
+        System.out.println("  - The server JAR file will be launched in the current JVM after the Potato Peeler process completes, and the remaining arguments will be passed to the server, including JVM options.");
     }
 }

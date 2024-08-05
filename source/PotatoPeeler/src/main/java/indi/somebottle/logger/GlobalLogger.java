@@ -11,7 +11,7 @@ public class GlobalLogger {
     /**
      * Logger 对象，记录日志格式： [日期] [级别] 信息
      */
-    private static Logger logger = Logger.getLogger("PotatoPeeler");
+    private static final Logger logger = Logger.getLogger("PotatoPeeler");
     /**
      * 日志存放目录
      */
@@ -39,6 +39,8 @@ public class GlobalLogger {
         }
         hh.setFormatter(new LoggerFormatter());
         logger.addHandler(hh);
+        // 防止日志在控制台重复输出，不使用继承的 handlers
+        logger.setUseParentHandlers(false);
     }
 
     /**

@@ -31,6 +31,8 @@ public class ArgsUtils {
         PEELER_ARGS.put("--cool-down", true);
         // 处理时采用的线程数
         PEELER_ARGS.put("--threads-num", true);
+        // 让程序打印使用信息
+        PEELER_ARGS.put("--help", false);
     }
 
     /**
@@ -115,6 +117,10 @@ public class ArgsUtils {
         // 如果没有指定线程数，默认为 10
         if (!peelerArgs.containsKey("--threads-num")) {
             peelerArgs.put("--threads-num", "10");
+        }
+        // 如果没有指定世界路径，默认为空
+        if (!peelerArgs.containsKey("--world-dirs")) {
+            peelerArgs.put("--world-dirs", "");
         }
     }
 
