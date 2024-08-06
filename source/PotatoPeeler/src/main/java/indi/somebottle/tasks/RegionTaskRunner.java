@@ -72,8 +72,14 @@ public class RegionTaskRunner implements Runnable {
                     try {
                         // 如果有的话尝试读取 .mca.bak
                         region = RegionUtils.readRegion(backupFile);
+                        // 把无法读取的 .mca 移除，然后把备份文件重命名为 .mca
+                        if (mcaFile.exists() && !mcaFile.delete()) {
+                            GlobalLogger.warning("Failed to delete file: " + mcaFile.getAbsolutePath());
+                            continue;
+                        }
+                        Files.move(backupMCAPath, originalMCAPath);
                     } catch (Exception ex) {
-                        GlobalLogger.severe("Exception occurred while reading backup region file: " + backupFile.getAbsolutePath(), e);
+                        GlobalLogger.severe("Exception occurred while reading and restoring backup region file: " + backupFile.getAbsolutePath(), e);
                         continue;
                     }
                 } else {
