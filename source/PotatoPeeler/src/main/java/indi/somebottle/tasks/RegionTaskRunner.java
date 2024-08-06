@@ -87,6 +87,7 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             }
+            // TODO：跳过 forceLoaded 的区块。可以先用 排序+二分查找 实现支持区间的区块白名单机制，对于 x 和 z 两个方向要分别建立一个区间有序列表。
             // 扫描区域所有现存区块，进行筛选
             boolean hasModified = false; // 标记是否对区块进行了修改
             List<Chunk> existingChunks = region.getExistingChunks();
@@ -121,7 +122,6 @@ public class RegionTaskRunner implements Runnable {
                 GlobalLogger.severe("Failed to backup(rename) file:" + mcaFile.getAbsolutePath(), e);
                 continue;
             }
-            // TODO： 待测试：有个问题，区块长度在游戏保存后可能是有增长的，这样紧凑写入真的没问题吗
             // 把修改后的区域写回原 mcaFile
             try {
                 // 注意，到这里时原 .mca 文件已经被重命名了 .mca.bak

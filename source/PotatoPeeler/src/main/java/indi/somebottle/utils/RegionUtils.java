@@ -24,7 +24,14 @@ public class RegionUtils {
      * @return 找到的 .mca 文件所在目录。如果没有找到会返回 null
      */
     public static Path findRegionDirPath(String worldPath) {
-        // BFS 寻找 region 目录
+        // BFS 寻找 region 目录，一层找完了再深入一层
+        /*
+         * 原版存档目录下，下界维度和末地维度（或其他维度）的目录是一起存在 world 目录下的，且各自也有 region 目录。
+         * 比如下界维度是 DIM-1，其数据存储在 world/DIM-1 目录下，此时存在 world/region 和 world/DIM-1/region
+         * 用 BFS 的话，就可以保证 worldPath="world" 时首先扫描到的是 world/region。
+         *
+         * SomeBottle 2024.8.6
+         */
         Queue<Path> pathQueue = new LinkedList<>();
         pathQueue.add(Paths.get(worldPath));
         while (!pathQueue.isEmpty()) {
@@ -59,7 +66,6 @@ public class RegionUtils {
      * @throws CompressionTypeUnsupportedException 如果压缩类型不支持，会抛出此异常
      */
     public static Region readRegion(File regionFile) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
-        // TODO：待测试 GZip, LZ4, 无压缩情况下的区块读取
         Region region = new Region(regionFile);
         GlobalLogger.fine("Reading region file: " + regionFile.getName());
         // regionStream 用于读取 .mca 文件头部元数据
