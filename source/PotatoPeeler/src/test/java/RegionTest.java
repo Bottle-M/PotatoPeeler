@@ -9,7 +9,7 @@ import java.util.List;
 public class RegionTest {
     @Test
     public void regionReadTest() {
-        File regionFile = new File("C:\\Users\\58379\\Desktop\\r.-1.-1.mca.modified");
+        File regionFile = new File("E:\\Projects\\TestArea\\minecraft-server\\world\\region\\r.0.0.mca");
         try {
             long startTime = System.currentTimeMillis();
             Region region = RegionUtils.readRegion(regionFile);
@@ -25,8 +25,8 @@ public class RegionTest {
 
     @Test
     public void regionModifyTest() {
-        File regionFile = new File("C:\\Users\\58379\\Desktop\\r.-1.-1.mca");
-        File outputFile = new File("C:\\Users\\58379\\Desktop\\r.-1.-1.mca.modified");
+        File regionFile = new File("E:\\Projects\\TestArea\\minecraft-server\\world\\region\\r.0.0.mca");
+        File outputFile = new File("E:\\Projects\\TestArea\\minecraft-server\\world\\region\\r.0.0.mca.modified");
         try {
             long startTime = System.currentTimeMillis();
             Region region = RegionUtils.readRegion(regionFile);
@@ -42,7 +42,7 @@ public class RegionTest {
                     chunk.setDeleteFlag(true);
                 }
             }
-            RegionUtils.writeRegion(region, outputFile);
+            RegionUtils.writeRegion(region, regionFile, outputFile);
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println("处理耗时: " + timeElapsed + "ms");
         } catch (Exception e) {

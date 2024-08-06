@@ -83,7 +83,12 @@ public class RegionTaskDispatcher {
         PeelResult res = new PeelResult();
         for (RegionTaskRunner runner : taskRunners) {
             // 累加结果
-            res.add(runner.getTaskResult());
+            PeelResult runnerRes = runner.getTaskResult();
+            res.add(runnerRes);
+            // 找到这么多线程中耗时最长的一个线程
+            if (runnerRes.getTimeElapsed() > res.getTimeElapsed()) {
+                res.setTimeElapsed(runnerRes.getTimeElapsed());
+            }
         }
         return res;
     }

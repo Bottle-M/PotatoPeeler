@@ -42,13 +42,12 @@ public class RegionTaskRunner implements Runnable {
         long sizeReduced = 0;
         long chunksRemoved = 0;
         long regionsAffected = 0;
-        long timeElapsed = 0;
+        long startTime = System.currentTimeMillis();
         // 队列非空时不断取出进行处理
         while (!Thread.currentThread().isInterrupted() && !queue.isEmpty()) {
             // 队列有任务时就取出进行处理
             File mcaFile = queue.poll();
             long originalLength = mcaFile.length();
-            long startTime = System.currentTimeMillis();
             // MCA 文件路径
             Path originalMCAPath = Paths.get(mcaFile.toURI());
             // 备份 MCA 文件路径
@@ -119,8 +118,9 @@ public class RegionTaskRunner implements Runnable {
             // TODO： 待测试：有个问题，区块长度在游戏保存后可能是有增长的，这样紧凑写入真的没问题吗
             // 把修改后的区域写回原 mcaFile
             try {
-                // TODO: no enough bytes 问题待解决
-                RegionUtils.writeRegion(region, mcaFile);
+                // 注意，到这里时原 .mca 文件已经被重命名了 .mca.bak
+                // 因此要从 .mca.bak 拷贝数据到新生成的 .mca
+                RegionUtils.writeRegion(region, backupFile, mcaFile);
             } catch (IOException e) {
                 // 写入失败，恢复备份
                 GlobalLogger.severe("Failed to write modified region to file: " + mcaFile.getAbsolutePath() + ", restoring backup...", e);
@@ -142,12 +142,12 @@ public class RegionTaskRunner implements Runnable {
             // 统计
             sizeReduced += (originalLength - mcaFile.length());
             regionsAffected++;
-            timeElapsed += (System.currentTimeMillis() - startTime);
         }
         // 更新任务结果
         taskResult.setSizeReduced(sizeReduced);
         taskResult.setChunksRemoved(chunksRemoved);
         taskResult.setRegionsAffected(regionsAffected);
-        taskResult.setTimeElapsed(timeElapsed);
+        // 记录每个线程执行任务的总耗时
+        taskResult.setTimeElapsed(System.currentTimeMillis() - startTime);
     }
 }

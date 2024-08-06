@@ -141,17 +141,18 @@ public class RegionUtils {
      * 被标记为 deleted 的区块不会再被写入。
      *
      * @param region     区域对象
+     * @param sourceFile 区域原数据所在文件的对象
      * @param outputFile 输出文件对象
      * @throws RegionFormatException 如果 .mca 文件格式不正确会抛出此异常
      * @throws IOException           IO 异常
+     * @apiNote sourceFile 用于读取原本的区块数据
      */
-    public static void writeRegion(Region region, File outputFile) throws IOException, RegionFormatException {
-        File regionFile = region.getRegionFile();
+    public static void writeRegion(Region region, File sourceFile, File outputFile) throws IOException, RegionFormatException {
         GlobalLogger.fine("Writing region to file: " + outputFile.getAbsolutePath());
         try (
                 FileOutputStream fos = new FileOutputStream(outputFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
-                RandomAccessFile chunkReader = new RandomAccessFile(regionFile, "r")
+                RandomAccessFile chunkReader = new RandomAccessFile(sourceFile, "r")
         ) {
             GlobalLogger.fine("\tWriting the first sector of the mca file.");
             // 缓冲区
@@ -220,7 +221,7 @@ public class RegionUtils {
                     int bytesToRead = (int) Math.min(bytesRemaining, dataBuf.length);
                     // 读取区块数据
                     if (chunkReader.read(dataBuf, 0, bytesToRead) != bytesToRead) {
-                        throw new RegionFormatException("MCA File format error in " + regionFile.getName() + ", unable to copy chunk data, no enough bytes.");
+                        throw new RegionFormatException("MCA File format error in " + sourceFile.getName() + ", unable to copy chunk data, no enough bytes.");
                     }
                     // 写入到输出文件
                     bos.write(dataBuf, 0, bytesToRead);

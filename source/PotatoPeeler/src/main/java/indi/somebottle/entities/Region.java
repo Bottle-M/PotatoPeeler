@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Region {
-    // 此区域的文件对象
-    private final File regionFile;
     // 此区域的 x 坐标
     private final long regionX;
     // 此区域的 z 坐标
@@ -29,7 +27,6 @@ public class Region {
 
 
     public Region(File regionFile) throws RegionPosNotFoundException {
-        this.regionFile = regionFile;
         // 从文件名中解析出 x, z
         // 文件名格式： r.<regionX>.<regionZ>.mca
         String[] mcaNameParts = regionFile.getName().split("\\.");
@@ -97,14 +94,6 @@ public class Region {
         existingChunks.add(chunk);
     }
 
-    /**
-     * 获得此区域的文件对象
-     *
-     * @return 文件对象
-     */
-    public File getRegionFile() {
-        return regionFile;
-    }
 
     /**
      * 获得指定坐标区块最后被修改时间戳

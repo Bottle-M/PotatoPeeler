@@ -86,6 +86,14 @@ public class Main {
             GlobalLogger.warning("This may cause some chunks to be removed even if they are currently in use.");
             GlobalLogger.warning("Please make sure you know what you are doing.");
             GlobalLogger.warning("*********************");
+            // 20 秒冷静期
+            GlobalLogger.warning("The program will continue in 20 seconds.");
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                // 如果线程被中断，则退出程序
+                System.exit(0);
+            }
         }
         // 计算自上次运行过去了多久
         long timeSinceLastRun = TimeUtils.timeNow() - TimeUtils.getLastRunTime();
@@ -105,6 +113,11 @@ public class Main {
         } else {
             // 开始处理区块
             GlobalLogger.info("====== POTATO-PEELER RUNNING ======");
+            GlobalLogger.info("********* DO NOT INTERRUPT ********");
+            if (!verboseOutput) {
+                // 提示用户可以打开细节输出
+                GlobalLogger.info("You could use '--verbose' option for more detailed information.");
+            }
             // 标记是否进行了处理
             boolean peeled = false;
             for (String worldDirPath : worldDirPaths) {
@@ -112,7 +125,6 @@ public class Main {
                     // 对于每个世界都进行处理
                     PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum);
                     GlobalLogger.info("====== POTATO-PEELER RESULT ======");
-                    // TODO： 因为这里涉及多线程处理，时间不能直接累加
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
                     GlobalLogger.info("Regions affected: " + peelResult.getRegionsAffected());
                     GlobalLogger.info("Chunks removed: " + peelResult.getChunksRemoved());

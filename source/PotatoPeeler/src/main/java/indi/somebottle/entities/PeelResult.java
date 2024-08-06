@@ -75,7 +75,8 @@ public class PeelResult {
     }
 
     /**
-     * 把另一个 PeelResult 的结果加到本对象中
+     * 把另一个 PeelResult 的结果加到本对象中 <br>
+     * timeElapsed 不参与此方法的运算，因为计算时间时往往不是简单的叠加。
      *
      * @param another 另一个 PeelResult 对象
      */
@@ -83,6 +84,5 @@ public class PeelResult {
         this.sizeReduced += another.sizeReduced;
         this.chunksRemoved += another.chunksRemoved;
         this.regionsAffected += another.regionsAffected;
-        this.timeElapsed += another.timeElapsed;
     }
 }
