@@ -81,7 +81,6 @@ public class RegionUtils {
              */
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
-                    GlobalLogger.fine("\tReading chunk at " + x + ", " + z);
                     // 先读取距离文件起点的偏移扇区数目
                     // 前 3 B 是大端存储的偏移扇区数目
                     byteRead = regionStream.read(buffer, 0, 3);

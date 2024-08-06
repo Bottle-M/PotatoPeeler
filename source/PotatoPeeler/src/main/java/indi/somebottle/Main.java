@@ -123,8 +123,10 @@ public class Main {
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
+                    GlobalLogger.info("Processing " + worldDirPath + "...");
                     PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum);
-                    GlobalLogger.info("====== POTATO-PEELER RESULT ======");
+                    GlobalLogger.info("=========== WORLD RESULT ============");
+                    GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
                     GlobalLogger.info("Regions affected: " + peelResult.getRegionsAffected());
                     GlobalLogger.info("Chunks removed: " + peelResult.getChunksRemoved());

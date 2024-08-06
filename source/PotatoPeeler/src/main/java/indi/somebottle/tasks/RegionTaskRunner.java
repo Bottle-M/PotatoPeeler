@@ -89,8 +89,8 @@ public class RegionTaskRunner implements Runnable {
                     // 如果区块数据较多，就不进行删除
                     continue;
                 }
-                if (chunk.getInhabitedTime() < minInhabited) {
-                    // 如果区块的 inhabitedTime 小于阈值，就将其标记为待删除
+                if (chunk.getInhabitedTime() <= minInhabited) {
+                    // 如果区块的 inhabitedTime 小于等于阈值，就将其标记为待删除
                     GlobalLogger.fine("Removed chunk at (" + chunk.getX() + "," + chunk.getZ() + ") in " + mcaFile.getName());
                     chunk.setDeleteFlag(true);
                     chunksRemoved++;

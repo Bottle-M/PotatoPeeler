@@ -21,6 +21,8 @@ public class GlobalLogger {
         // 输出到控制台
         ConsoleHandler ch = new ConsoleHandler();
         ch.setFormatter(new LoggerFormatter());
+        // 只要是日志记录器记录到的，都打印出来
+        ch.setLevel(Level.ALL);
         logger.addHandler(ch);
         // 记录到文件中
         File logDir = new File(LOGGER_DIR);
@@ -38,6 +40,7 @@ public class GlobalLogger {
             System.exit(1);
         }
         hh.setFormatter(new LoggerFormatter());
+        hh.setLevel(Level.ALL);
         logger.addHandler(hh);
         // 防止日志在控制台重复输出，不使用继承的 handlers
         logger.setUseParentHandlers(false);
