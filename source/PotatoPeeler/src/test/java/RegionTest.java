@@ -25,8 +25,8 @@ public class RegionTest {
 
     @Test
     public void regionModifyTest() {
-        File regionFile = new File("E:\\Projects\\TestArea\\minecraft-server\\world\\region\\r.0.0.mca");
-        File outputFile = new File("E:\\Projects\\TestArea\\minecraft-server\\world\\region\\r.0.0.mca.modified");
+        File regionFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.-1.0.mca.zlib");
+        File outputFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.0.0.mca.modified");
         try {
             long startTime = System.currentTimeMillis();
             Region region = RegionUtils.readRegion(regionFile);
@@ -49,4 +49,5 @@ public class RegionTest {
             e.printStackTrace();
         }
     }
+
 }

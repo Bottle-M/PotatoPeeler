@@ -195,7 +195,7 @@ public class Main {
         System.out.println("  --server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
         System.out.println();
         System.out.println("Example:");
-        System.out.println("  java -jar -Xmx 4G PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
+        System.out.println("  java -jar -Xmx4G PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
         System.out.println();
         System.out.println("Note:");
         System.out.println("  - The world directories should be separated by commas without spaces.");
