@@ -18,7 +18,7 @@ public class RTreeTest {
             e.printStackTrace();
         }*/
         // R* 树
-        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(6).create();
+        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(4).create();
         for (int i = 0; i < 100; i++) {
             // 随机生成 100 个矩形
             // 注意 x2 必须大于 x1, y2 必须大于 y1
@@ -51,9 +51,11 @@ public class RTreeTest {
     public void hitTest() {
         // R* 树
         RTree<Boolean, Geometry> tree = RTree.star().maxChildren(6).create();
+        // 形成 L 形，测试边界是否准确
         tree = tree.add(true, Geometries.rectangle(0f, 0f, 3f, 1f))
-                .add(true, Geometries.rectangle(2f, 0f, 3f, 4f));
-        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point(1f, 1f));
+                .add(true, Geometries.rectangle(2f, 0f, 3f, 4f))
+                .add(true, Geometries.point(1f, 2f));
+        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point(2f, 4f));
         if (results.iterator().hasNext()) {
             System.out.println("Hit!");
         } else {

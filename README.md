@@ -8,7 +8,7 @@ A simple tool to remove unused chunks of my Minecraft server, freeing disk space
 3. 使用方式（作为独立工具使用 / 作为服务器 Wrapper 使用）
 4. unsuitable-scenarios
 5. 对于原版存档格式可以像这样指定不同维度的数据目录：`world`, `world/DIM-1`。
-6. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）
+6. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）（保证 to > from）（写的是区块坐标）
 7. 配置项中带数值的一定要写单位。
 
 ## 使用的开源项目

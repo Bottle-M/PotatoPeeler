@@ -1,5 +1,9 @@
 package indi.somebottle.utils;
 
+import com.github.davidmoten.rtree2.Entry;
+import com.github.davidmoten.rtree2.RTree;
+import com.github.davidmoten.rtree2.geometry.Geometries;
+import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.IntRange;
 import indi.somebottle.exceptions.RegionFormatException;
@@ -144,19 +148,21 @@ public class ChunkUtils {
 
     /**
      * 从名单文件中读取出受保护的区块，用 R* 树建立索引<br>
-     * R 树非常适合为空间中的范围查询建立索引。
+     * R 树非常适合为空间中的范围查询建立索引（尤其是空间中存在形状不规则的矩形）。
      *
-     * @param filePath 名单文件路径
+     * @param listFile 名单文件 File 对象
      * @return R* 树对象
      * @throws IOException 文件读取出错时抛出
      */
-    public static void readProtectedChunks(String filePath) throws IOException {
-        // TODO：应当支持类似 .gitignore 的 # 注释
-        // TODO：每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
+    public static RTree<Boolean, Geometry> readProtectedChunks(File listFile) throws IOException {
+        // TODO：待测试：应当支持类似 .gitignore 的 # 注释
+        // TODO：待测试：每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
         long lineCnt = 0; // 记录行号，方便定位错误
+        // R* 树
+        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(4).create();
         String line;
         try (
-                FileReader fr = new FileReader(filePath);
+                FileReader fr = new FileReader(listFile);
                 BufferedReader br = new BufferedReader(fr)
         ) {
             while ((line = br.readLine()) != null) {
@@ -175,11 +181,41 @@ public class ChunkUtils {
                 try {
                     IntRange xRange = RangeUtils.parseSingleIntRange(parts[0]);
                     IntRange zRange = RangeUtils.parseSingleIntRange(parts[1]);
+                    // tree immutable
+                    // 注意 RangeUtils.parseSingleIntRange 方法保证 to > from，这也是 rtree 构建时的要求
+                    tree = tree.add(true, Geometries.rectangle((float) xRange.from, (float) zRange.from, (float) xRange.to, (float) zRange.to));
                 } catch (Exception e) {
                     // 在头部加上行号再抛出
                     throw new IOException("Line " + lineCnt + ": " + e.getMessage() + ": Invalid format in line: " + line);
                 }
             }
         }
+        return tree;
+    }
+
+    /**
+     * 把区块坐标 (x, z) 处的区块加入受保护名单（R* 树索引）
+     *
+     * @param tree R* 树对象
+     * @param x    区块坐标 x
+     * @param z    区块坐标 z
+     * @return 新的 R* 树对象
+     */
+    public static RTree<Boolean, Geometry> addProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
+        return tree.add(true, Geometries.point((float) x, (float) z));
+    }
+
+    /**
+     * 判断区块坐标 (x, z) 处的区块是否在受保护名单中（R* 树索引）
+     *
+     * @param tree R* 树对象
+     * @param x    区块坐标 x
+     * @param z    区块坐标 z
+     * @return 是否受保护
+     */
+    public static boolean isProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
+        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((float) x, (float) z));
+        // 搜索到结果则说明 (x, z) 点和某些受保护区块有交集（本质上是一些矩形区域以及点）
+        return results.iterator().hasNext();
     }
 }
