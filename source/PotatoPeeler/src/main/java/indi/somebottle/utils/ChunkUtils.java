@@ -1,11 +1,11 @@
 package indi.somebottle.utils;
 
 import indi.somebottle.entities.Chunk;
+import indi.somebottle.entities.IntRange;
 import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.streams.ChunkDataInputStream;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 
 /**
  * 区块 Chunk 相关的工具方法
@@ -139,5 +139,47 @@ public class ChunkUtils {
         }
         // 没有找到
         throw new RegionFormatException("InhabitedTime not found in chunk data");
+    }
+
+
+    /**
+     * 从名单文件中读取出受保护的区块，用 R* 树建立索引<br>
+     * R 树非常适合为空间中的范围查询建立索引。
+     *
+     * @param filePath 名单文件路径
+     * @return R* 树对象
+     * @throws IOException 文件读取出错时抛出
+     */
+    public static void readProtectedChunks(String filePath) throws IOException {
+        // TODO：应当支持类似 .gitignore 的 # 注释
+        // TODO：每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
+        long lineCnt = 0; // 记录行号，方便定位错误
+        String line;
+        try (
+                FileReader fr = new FileReader(filePath);
+                BufferedReader br = new BufferedReader(fr)
+        ) {
+            while ((line = br.readLine()) != null) {
+                lineCnt++;
+                // 可能有行内注释，用 # 开头，忽略 # 之后的部分即可
+                line = line.split("#")[0];
+                // 去除配置内容首尾的空白字符
+                line = line.trim();
+                // 跳过空行
+                if (line.isEmpty())
+                    continue;
+                String[] parts = line.split(",");
+                // 缺少了对 x 或者 z 坐标范围的指定
+                if (parts.length != 2)
+                    throw new IOException("Line " + lineCnt + ": Invalid format in line: " + line);
+                try {
+                    IntRange xRange = RangeUtils.parseSingleIntRange(parts[0]);
+                    IntRange zRange = RangeUtils.parseSingleIntRange(parts[1]);
+                } catch (Exception e) {
+                    // 在头部加上行号再抛出
+                    throw new IOException("Line " + lineCnt + ": " + e.getMessage() + ": Invalid format in line: " + line);
+                }
+            }
+        }
     }
 }

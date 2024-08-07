@@ -87,7 +87,7 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             }
-            // TODO：跳过 forceLoaded 的区块。可以先用 排序+二分查找 实现支持区间的区块白名单机制，对于 x 和 z 两个方向要分别建立一个区间有序列表。
+            // TODO：跳过 forceLoaded 的区块。可以先用 排序+二分查找 实现支持区间的区块移除黑名单机制，对于 x 和 z 两个方向要分别建立一个区间有序列表。
             // 扫描区域所有现存区块，进行筛选
             boolean hasModified = false; // 标记是否对区块进行了修改
             List<Chunk> existingChunks = region.getExistingChunks();

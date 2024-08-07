@@ -3,9 +3,20 @@ A simple tool to remove unused chunks of my Minecraft server, freeing disk space
 
 ## Outline
 
-1. unsuitable-scenarios
-2. 对于原版存档格式可以像这样指定不同维度的数据目录：`world`, `world/DIM-1`。
-3. 不会移除被 `/forceload` 强制加载的区块。
+1. 工具工作原理
+2. 支持的存档格式（仅 Java）
+3. 使用方式（作为独立工具使用 / 作为服务器 Wrapper 使用）
+4. unsuitable-scenarios
+5. 对于原版存档格式可以像这样指定不同维度的数据目录：`world`, `world/DIM-1`。
+6. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）
+7. 配置项中带数值的一定要写单位。
+
+## 使用的开源项目
+
+感谢开源开发者们的辛苦工作！
+
+* [lz4-java](https://github.com/lz4/lz4-java)  
+* [rtree2](https://github.com/davidmoten/rtree2)  
 
 ## 参考文档
 
