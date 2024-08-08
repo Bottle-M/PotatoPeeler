@@ -177,16 +177,23 @@ public class ChunkUtils {
                 String[] parts = line.split(",");
                 // 缺少了对 x 或者 z 坐标范围的指定
                 if (parts.length != 2)
-                    throw new IOException("Line " + lineCnt + ": Invalid format in line: " + line);
+                    throw new IOException("Line " + lineCnt + ": Invalid line here: '" + line + "'");
                 try {
                     IntRange xRange = RangeUtils.parseSingleIntRange(parts[0]);
                     IntRange zRange = RangeUtils.parseSingleIntRange(parts[1]);
                     // tree immutable
                     // 注意 RangeUtils.parseSingleIntRange 方法保证 to > from，这也是 rtree 构建时的要求
-                    tree = tree.add(true, Geometries.rectangle((float) xRange.from, (float) zRange.from, (float) xRange.to, (float) zRange.to));
+                    // 采用双精度浮点数，不然 32 位有符号整数转换时可能损失精度
+                    if (xRange.from == xRange.to && zRange.from == zRange.to) {
+                        // 是一个点
+                        tree = tree.add(true, Geometries.point((double) xRange.from, zRange.from));
+                    } else {
+                        // 是一个矩形区域
+                        tree = tree.add(true, Geometries.rectangle((double) xRange.from, zRange.from, xRange.to, zRange.to));
+                    }
                 } catch (Exception e) {
                     // 在头部加上行号再抛出
-                    throw new IOException("Line " + lineCnt + ": " + e.getMessage() + ": Invalid format in line: " + line);
+                    throw new IOException("Line " + lineCnt + ": " + e.getMessage() + ": Invalid line here: '" + line + "'");
                 }
             }
         }
@@ -202,7 +209,7 @@ public class ChunkUtils {
      * @return 新的 R* 树对象
      */
     public static RTree<Boolean, Geometry> addProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
-        return tree.add(true, Geometries.point((float) x, (float) z));
+        return tree.add(true, Geometries.point((double) x, z));
     }
 
     /**
@@ -214,7 +221,7 @@ public class ChunkUtils {
      * @return 是否受保护
      */
     public static boolean isProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
-        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((float) x, (float) z));
+        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) x, z));
         // 搜索到结果则说明 (x, z) 点和某些受保护区块有交集（本质上是一些矩形区域以及点）
         return results.iterator().hasNext();
     }

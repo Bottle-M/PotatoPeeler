@@ -20,15 +20,16 @@ public class RTreeTest {
         // R* 树
         RTree<Boolean, Geometry> tree = RTree.star().maxChildren(4).create();
         for (int i = 0; i < 100; i++) {
-            // 随机生成 100 个矩形
+            // 随机生成 100 个矩形，模拟 100 个不同大小的受保护区块区域
             // 注意 x2 必须大于 x1, y2 必须大于 y1
-            float x1 = (float) rd.nextInt(), y1 = (float) rd.nextInt(), x2 = x1 + (float) rd.nextInt(3000000), y2 = y1 + (float) rd.nextInt(3000000);
+            double x1 = rd.nextInt(), y1 = rd.nextInt(), x2 = x1 + (double) rd.nextInt(3000000), y2 = y1 + (double) rd.nextInt(3000000);
             tree = tree.add(true, Geometries.rectangle(x1, y1, x2, y2));
         }
         int hitNum = 0, missNum = 0;
         long startTime = System.currentTimeMillis();
+        // 1024 * 1000 次查询
         for (int i = 0; i < 1024 * 1000; i++) {
-            Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((float) rd.nextInt(), (float) rd.nextInt()));
+            Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) rd.nextInt(), (double) rd.nextInt()));
             if (results.iterator().hasNext()) {
                 hitNum++;
             } else {
@@ -38,6 +39,7 @@ public class RTreeTest {
         long timeElapsed = System.currentTimeMillis() - startTime;
         System.out.println("Time elapsed: " + timeElapsed + " ms");
         System.out.println("Hit: " + hitNum + ", miss: " + missNum);
+        // 测试结果：1024 * 1000 次查询，即模拟查询 1000 个 mca 文件中的所有区块，耗时 1000 ms 左右，效率很高
         /*System.gc();
         try {
             // 触发 GC 后等待 20 秒

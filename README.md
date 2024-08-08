@@ -1,15 +1,22 @@
 # PotatoPeeler
-A simple tool to remove unused chunks of my Minecraft server, freeing disk space.  
+A simple tool to remove **unused chunks** from my Minecraft server, freeing disk space.   
+
+Maybe a Java implementation of [Thanos](https://github.com/aternosorg/thanos).  
+
+## Features  
+
+...
 
 ## Outline
 
-1. 工具工作原理
+1. 工具工作原理，写清楚哪些区块会被移除，哪些不会（强制加载，InhabitedTime，数据过大）
 2. 支持的存档格式（仅 Java）
 3. 使用方式（作为独立工具使用 / 作为服务器 Wrapper 使用）
 4. unsuitable-scenarios
 5. 对于原版存档格式可以像这样指定不同维度的数据目录：`world`, `world/DIM-1`。
 6. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）（保证 to > from）（写的是区块坐标）
 7. 配置项中带数值的一定要写单位。
+8. 一些常见的使用用例 Examples
 
 ## 使用的开源项目
 

@@ -18,16 +18,17 @@ public class RangeUtils {
      * @apiNote 此方法保证返回的 to > from
      */
     public static IntRange parseSingleIntRange(String rangeStr) throws IOException {
-        String[] parts = rangeStr.split("-");
+        // 如果 split 的 limit 不设为 -1，会丢弃尾部的空字串
+        String[] parts = rangeStr.split("-", -1);
         if (parts.length > 2) {
             // 格式错误
-            throw new IOException("Invalid coordinate range: " + rangeStr);
+            throw new IOException("Invalid coordinate range: '" + rangeStr + "'");
         }
         // 去除多余空格
         parts[0] = parts[0].trim();
         if (parts[0].isEmpty()) {
             // range from 不可为空
-            throw new IOException("Invalid coordinate range 'from': " + rangeStr);
+            throw new IOException("Invalid coordinate range from='" + rangeStr + "'");
         }
         IntRange intRange = new IntRange();
         if (parts[0].equals("*")) {
@@ -43,7 +44,7 @@ public class RangeUtils {
             // 如果有 to，那么不应该为空
             parts[1] = parts[1].trim();
             if (parts[1].isEmpty()) {
-                throw new IOException("Invalid coordinate range 'to': " + rangeStr);
+                throw new IOException("Invalid coordinate range to='" + rangeStr + "'");
             }
             // 如果有 parts[1]，那么指定为 to
             if (parts[1].equals("*")) {
