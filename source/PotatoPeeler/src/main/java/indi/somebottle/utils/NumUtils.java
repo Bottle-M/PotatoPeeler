@@ -17,7 +17,9 @@ public class NumUtils {
     private static final long BYTES_PER_KIB = 1L << 10;
 
     /**
-     * 字节序列按大端转换为数值（最高支持 8 字节）
+     * 字节序列按大端转换为数值（最高支持 8 字节） <br>
+     * - buf 小于 8 字节时，只适合无符号数（不然负数处理后会丢失符号） <br>
+     * - 当 buf 正好是 8 字节，就会转换为带符号的 long 类型
      *
      * @param buf   存储字节序列的 byte[]
      * @param width 数字占有几字节（不可超过 8）

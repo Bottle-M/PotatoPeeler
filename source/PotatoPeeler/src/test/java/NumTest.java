@@ -4,8 +4,10 @@ import org.junit.Test;
 public class NumTest {
     @Test
     public void bigEndianToNumTest() {
-        byte[] testBuf = {0x01, 0x0a, (byte) 0x9f, (byte) 0xc7, 0x00, 0x42};
-        System.out.println(NumUtils.bigEndianToLong(testBuf, 6));
+        byte[] testBuf = {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xF4, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE};
+        long res = NumUtils.bigEndianToLong(testBuf, 8);
+        System.out.printf("%d\n", (int)(res & 0xFFFFFFFFL));
+        System.out.printf("%d\n", res >> 32);
     }
 
     @Test
@@ -24,7 +26,7 @@ public class NumTest {
     }
 
     @Test
-    public void bytesToHumanReadable(){
-        System.out.println(NumUtils.bytesToHumanReadable(1024L*1024+1024L+4));
+    public void bytesToHumanReadable() {
+        System.out.println(NumUtils.bytesToHumanReadable(1024L * 1024 + 1024L + 4));
     }
 }

@@ -6,10 +6,12 @@ import com.github.davidmoten.rtree2.geometry.Geometries;
 import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.IntRange;
+import indi.somebottle.exceptions.NBTFormatException;
 import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.streams.ChunkDataInputStream;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * 区块 Chunk 相关的工具方法
@@ -42,6 +44,15 @@ public class ChunkUtils {
      */
 
     /**
+     * 强制加载区块存储文件中的 Forced 标签部分的十六进制表示 <br>
+     * 0x0C 表示这是一个 Long 类型数组 <br>
+     * 0x00 0x06 表示这个标签名字长 6 字节 <br>
+     * 后门这一段表示标签名 Forced。<br>
+     * 标签名后面 4 个字节是数组长度，随后则是 Long 类型的数组元素。
+     */
+    public static final byte[] FORCED_TAG_BIN = {0x0C, 0x00, 0x06, 0x46, 0x6F, 0x72, 0x63, 0x65, 0x64};
+
+    /**
      * 从 .mca 文件中根据偏移读出特定的区块
      *
      * @param reader                mca 文件 RandomAccessFile 对象
@@ -54,7 +65,6 @@ public class ChunkUtils {
      * @apiNote 注意：这个方法会改变 RandomAccessFile 的指针位置
      */
     public static Chunk readChunk(RandomAccessFile reader, long offsetInFile, int sectorsOccupiedInFile, int x, int z) throws IOException {
-        // 先把先前的指针位置备个份
         // 开一个 4 KiB × sectorsOccupiedInFile 的缓冲区
         // 最多会读取这么多数据
         byte[] buffer = new byte[4096 * sectorsOccupiedInFile];
@@ -89,8 +99,8 @@ public class ChunkUtils {
             long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
             // 构建新的区块对象
             return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
-        } catch (RegionFormatException e) {
-            // 发生 RegionFormatException 后加上区块坐标信息
+        } catch (NBTFormatException e) {
+            // 发生 NBTFormatException 后加上区块坐标信息
             throw new RegionFormatException(e.getMessage() + " in chunk (" + x + ", " + z + ")");
         }
     }
@@ -102,47 +112,30 @@ public class ChunkUtils {
      * @param dataLen         最多读取多少数据长度（记得去掉“压缩方式”占用的一个字节）
      * @param compressionType 压缩类型
      * @return 读取出的 InhabitedTime 数据（Long）
-     * @throws IOException           如果读取失败会抛出此异常
-     * @throws RegionFormatException 当区块数据有误，读取不到 InhabitedTime 时抛出
+     * @throws IOException        如果读取失败会抛出此异常
+     * @throws NBTFormatException 当区块数据有误，读取不到 InhabitedTime 时抛出
      * @apiNote 调用前，请把 chunkReader 指针移动到开始读取的位置。注意，读取完毕后 chunkReader 指针应该在读取的最后一个字节处。
      */
     public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
         // 其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
-        // 用于进行字节匹配的指针
-        int searchPtr = 0;
         try (ChunkDataInputStream cdis = new ChunkDataInputStream(chunkReader, dataLen, compressionType)) {
-            int byteRead;
-            while ((byteRead = cdis.read()) != -1) {
-                // 与上 0xFF 提升至 int，方便比较。
-                if (byteRead == (INHABITED_TIME_TAG_BIN[searchPtr] & 0xFF)) {
-                    // 字节匹配则指针后移
-                    searchPtr++;
-                } else if (byteRead == (INHABITED_TIME_TAG_BIN[0] & 0xFF)) {
-                    // 如果不匹配，检查开头字节是否和当前字节一致
-                    // 如果是的话下一次从子串第二个字节开始匹配
-                    searchPtr = 1;
+            if (IOUtils.findAndSkipBytes(cdis, INHABITED_TIME_TAG_BIN)) {
+                // 如果找到了标签名，便接着读取后 8 个字节
+                // 注意 nbt Long 标签值是有符号数，因此用 long 存储
+                byte[] numBuf = new byte[8];
+                if (cdis.read(numBuf) == 8) {
+                    // 正好读入了 8 字节，按大端序进行转换
+                    // 虽然只有 8 个字节，但不用担心会变成负数
+                    // InhabitedTime 怎么也不可能这么大
+                    return NumUtils.bigEndianToLong(numBuf, 8);
                 } else {
-                    // 否则下一次从头开始
-                    searchPtr = 0;
-                }
-                // 如果整个 INHABITED_TIME_TAG_BIN 串匹配上了
-                // 说明找到了 InhabitedTime 标签
-                if (searchPtr == INHABITED_TIME_TAG_BIN.length) {
-                    // 接着读取后 8 个字节
-                    // 注意 nbt Long 标签值是有符号数，因此用 long 存储
-                    byte[] numBuf = new byte[8];
-                    if (cdis.read(numBuf) == 8) {
-                        // 正好读入了 8 字节，按大端序进行转换
-                        return NumUtils.bigEndianToLong(numBuf, 8);
-                    } else {
-                        // 否则读取失败
-                        throw new RegionFormatException("InhabitedTime was found, but no enough bytes to read");
-                    }
+                    // 否则读取失败
+                    throw new NBTFormatException("InhabitedTime was found, but no enough bytes to read");
                 }
             }
         }
         // 没有找到
-        throw new RegionFormatException("InhabitedTime not found in chunk data");
+        throw new NBTFormatException("InhabitedTime not found in chunk data");
     }
 
 
@@ -213,6 +206,49 @@ public class ChunkUtils {
     }
 
     /**
+     * 把强制加载区块文件中的区块存入受保护名单（R* 树索引）
+     *
+     * @param tree                  R* 树对象
+     * @param forceLoadedChunksFile 强制加载区块存储文件的 File 对象
+     * @return 新的 R* 树对象
+     * @throws IOException        如果读取失败会抛出此异常
+     * @throws NBTFormatException 当 NBT 标签数据有误，无法读取到一些字段时抛出
+     */
+    public static RTree<Boolean, Geometry> protectForceLoadedChunks(RTree<Boolean, Geometry> tree, File forceLoadedChunksFile) throws IOException {
+        // 和 findInhabitedTime 思路类似
+        // 强制加载区块存储文件是以 GZip 算法压缩的
+        try (
+                FileInputStream fis = new FileInputStream(forceLoadedChunksFile);
+                BufferedInputStream bis = new BufferedInputStream(fis);
+                GZIPInputStream gzis = new GZIPInputStream(bis)
+        ) {
+            if (IOUtils.findAndSkipBytes(gzis, FORCED_TAG_BIN)) {
+                byte[] numBuf = new byte[8];
+                // 找到了 Forced 标签，先读取其后 4 个字节，这是 Long 数组长度
+                if (gzis.read(numBuf, 0, 4) != 4) {
+                    // 读取失败
+                    throw new NBTFormatException("Forced tag was found, but unable to read array size in file:" + forceLoadedChunksFile.getAbsolutePath());
+                }
+                long arrSize = NumUtils.bigEndianToLong(numBuf, 4);
+                for (int i = 0; i < arrSize; i++) {
+                    // 读取数组中的每个元素
+                    if (gzis.read(numBuf) != 8) {
+                        // 读取失败
+                        throw new NBTFormatException("Forced tag was found, but unable to read array element [" + i + "] in file:" + forceLoadedChunksFile.getAbsolutePath());
+                    }
+                    long chunkPos = NumUtils.bigEndianToLong(numBuf, 8);
+                    // 强制加载区块文件中，每个 Long 元素的低 4 字节是 x 坐标，高 4 字节是 z 坐标
+                    int x = (int) (chunkPos & 0xFFFFFFFFL);
+                    int z = (int) (chunkPos >> 32 & 0xFFFFFFFFL);
+                    // 把区块坐标点加入到索引中
+                    tree = addProtectedChunk(tree, x, z);
+                }
+            }
+        }
+        return tree;
+    }
+
+    /**
      * 判断区块坐标 (x, z) 处的区块是否在受保护名单中（R* 树索引）
      *
      * @param tree R* 树对象
@@ -225,4 +261,5 @@ public class ChunkUtils {
         // 搜索到结果则说明 (x, z) 点和某些受保护区块有交集（本质上是一些矩形区域以及点）
         return results.iterator().hasNext();
     }
+
 }
