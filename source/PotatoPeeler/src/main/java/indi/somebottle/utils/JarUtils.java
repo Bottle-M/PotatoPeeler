@@ -45,7 +45,7 @@ public class JarUtils {
             Class<?> mainClass = classLoader.loadClass(mainClassName);
             // 获取 main 方法
             Method mainMethod = mainClass.getMethod("main", String[].class);
-            // 调用 main 方法，开始执行服务端程序
+            // 调用 main 方法，开始执行服务端程序，顺带传入参数
             mainMethod.invoke(null, (Object) args);
         }
     }

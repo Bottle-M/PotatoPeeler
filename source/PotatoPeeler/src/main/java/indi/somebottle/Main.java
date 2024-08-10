@@ -146,7 +146,6 @@ public class Main {
             boolean peeled = false;
             for (String worldDirPath : worldDirPaths) {
                 try {
-                    // TODO：读取 chunks.dat，把 forceLoaded 的区块加入 R* Tree
                     // 对于每个世界都进行处理
                     GlobalLogger.info("Processing " + worldDirPath + "...");
                     // 任务参数
@@ -222,7 +221,7 @@ public class Main {
         System.out.println("  --threads-num <number>           Number of worker threads to use. (default: 10)");
         System.out.println("  --verbose                        Enable verbose output.");
         System.out.println("  --skip-peeler                    Skip the Potato Peeler process.");
-        System.out.println("  --protected-chunks <path>        Path to the protected chunks list file. (default: protected_chunks.list)");
+        System.out.println("  --protected-chunks <path>        Path to the protected chunks list file. (default: ./protected_chunks.list)");
         System.out.println("  --server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
         System.out.println();
         System.out.println("Example:");

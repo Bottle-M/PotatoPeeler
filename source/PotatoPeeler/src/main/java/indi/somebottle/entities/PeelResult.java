@@ -17,21 +17,6 @@ public class PeelResult {
         timeElapsed = 0;
     }
 
-    /**
-     * 清理区块后的结果
-     *
-     * @param sizeReduced     减小的尺寸（Bytes）
-     * @param chunksRemoved   移除的区块数目
-     * @param regionsAffected 受影响的区域数目
-     * @param timeElapsed     耗时
-     */
-    public PeelResult(long sizeReduced, long chunksRemoved, long regionsAffected, long timeElapsed) {
-        this.sizeReduced = sizeReduced;
-        this.chunksRemoved = chunksRemoved;
-        this.regionsAffected = regionsAffected;
-        this.timeElapsed = timeElapsed;
-    }
-
     public long getSizeReduced() {
         return sizeReduced;
     }

@@ -4,6 +4,7 @@ import indi.somebottle.utils.RegionUtils;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class RegionTest {
@@ -50,4 +51,9 @@ public class RegionTest {
         }
     }
 
+    @Test
+    public void findRegionDirTest() {
+        Path res = RegionUtils.findRegionDirPath("world");
+        System.out.println(res);
+    }
 }

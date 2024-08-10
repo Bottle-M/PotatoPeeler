@@ -16,4 +16,13 @@ public class ListReadTest {
         System.out.println(tree.size());
         System.out.println(ChunkUtils.isProtectedChunk(tree, 1, 3));
     }
+
+    @Test
+    public void readForceLoadedChunks() throws IOException {
+        File chunksDatFile = new File("chunks.dat");
+        RTree<Boolean, Geometry> tree = RTree.create();
+        tree = ChunkUtils.protectForceLoadedChunks(tree, chunksDatFile);
+        System.out.println(tree.size());
+        System.out.println(ChunkUtils.isProtectedChunk(tree, -2, -12));
+    }
 }

@@ -1,6 +1,6 @@
 package indi.somebottle.exceptions;
 
-public class RegionTaskAlreadyStartedException extends Exception {
+public class RegionTaskAlreadyStartedException extends IllegalStateException {
     /**
      * 自定义异常：任务已经在运行
      *

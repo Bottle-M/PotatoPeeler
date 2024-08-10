@@ -12,7 +12,7 @@ import java.nio.file.Files;
 
 public class TimeUtils {
     // 记录上次运行时间的文件
-    private static File timeRecordFile = new File("./peeler.lrt");
+    private static final File timeRecordFile = new File("./peeler.lrt");
     // 上次运行的时间
     private static long lastRunTime = 0;
 

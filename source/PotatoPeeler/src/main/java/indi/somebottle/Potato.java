@@ -1,7 +1,5 @@
 package indi.somebottle;
 
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.TaskParams;
 import indi.somebottle.tasks.RegionTaskDispatcher;
 import indi.somebottle.entities.PeelResult;
@@ -33,7 +31,6 @@ public class Potato {
      */
     public static PeelResult peel(String worldPath, int threadsNum, TaskParams params) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
         // 先检查世界目录下的区域文件目录是否存在
-        // TODO： 待测试：是否优先找到最浅层的 region 目录
         Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
         if (regionDirPath == null) {
             // 没有找到区域文件所在目录
@@ -51,7 +48,6 @@ public class Potato {
             // 如果 chunks.dat 存在，则读取本世界维度强制加载的区块，加入索引
             params.protectedChunksTree = ChunkUtils.protectForceLoadedChunks(params.protectedChunksTree, chunksDatPath.toFile());
         }
-        // 找到 .mca 文件了则开始处理
         // 创建任务调度器
         RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(threadsNum, params);
         // 把文件提交给任务调度器

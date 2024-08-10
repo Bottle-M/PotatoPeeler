@@ -1,6 +1,6 @@
 package indi.somebottle.exceptions;
 
-public class RegionTaskNotAcceptedException extends Exception {
+public class RegionTaskNotAcceptedException extends IllegalStateException {
     /**
      * 自定义异常：当处理 Region 的任务不被接收时抛出
      *

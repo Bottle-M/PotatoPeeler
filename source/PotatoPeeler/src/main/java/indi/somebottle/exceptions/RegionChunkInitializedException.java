@@ -1,6 +1,6 @@
 package indi.somebottle.exceptions;
 
-public class RegionChunkInitializedException extends Exception {
+public class RegionChunkInitializedException extends IllegalStateException {
     /**
      * 自定义异常：Chunk 已经初始化
      *

@@ -1,6 +1,6 @@
 package indi.somebottle.exceptions;
 
-public class RegionTaskInterruptedException extends Exception {
+public class RegionTaskInterruptedException extends InterruptedException {
     /**
      * 自定义异常：任务被打断
      *

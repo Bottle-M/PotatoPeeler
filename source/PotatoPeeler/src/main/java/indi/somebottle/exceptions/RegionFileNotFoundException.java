@@ -1,6 +1,8 @@
 package indi.somebottle.exceptions;
 
-public class RegionFileNotFoundException extends Exception {
+import java.io.IOException;
+
+public class RegionFileNotFoundException extends IOException {
     /**
      * 自定义异常：区域文件未找到
      *

@@ -64,6 +64,7 @@ public class RegionUtils {
      * @throws IOException                         如果文件读取失败会抛出此异常
      * @throws RegionFormatException               如果 .mca 文件格式不正确会抛出此异常
      * @throws CompressionTypeUnsupportedException 如果压缩类型不支持，会抛出此异常
+     * @throws RegionChunkInitializedException     如果 Chunk 被重复初始化，会抛出此异常（不应该有这种情况）
      */
     public static Region readRegion(File regionFile) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
         Region region = new Region(regionFile);
@@ -75,10 +76,7 @@ public class RegionUtils {
                 RandomAccessFile chunkReader = new RandomAccessFile(regionFile, "r")
         ) {
             // 参考文档：https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F
-            // 一次读取到的最大单位是一个扇区，定为 4 KiB
-            // 因此开一个 4 KiB 的缓冲区
-            byte[] buffer = new byte[4096];
-            int byteRead = 0;
+            byte[] buffer = new byte[4];
             // 一共有 1024 个区块的偏移和长度数据，逐个读取
             /*
              * 注意，如果你改变了这里的遍历顺序，那么底下 writeRegion 拷贝区块数据的逻辑就要重写。
@@ -89,8 +87,7 @@ public class RegionUtils {
                 for (int z = 0; z < 32; z++) {
                     // 先读取距离文件起点的偏移扇区数目
                     // 前 3 B 是大端存储的偏移扇区数目
-                    byteRead = regionStream.read(buffer, 0, 3);
-                    if (byteRead < 3) {
+                    if (regionStream.read(buffer, 0, 3) < 3) {
                         // 读取失败，文件格式错误
                         throw new RegionFormatException("MCA File format error in " + regionFile + ", unable to find sector offset of chunk " + x + ", " + z);
                     }
@@ -124,8 +121,7 @@ public class RegionUtils {
             // 紧接着的是 1024 个 4 字节大端时间戳（纪元秒）
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
-                    byteRead = regionStream.read(buffer, 0, 4);
-                    if (byteRead < 4) {
+                    if (regionStream.read(buffer, 0, 4) < 4) {
                         // 读取失败，文件格式错误
                         throw new RegionFormatException("MCA File format error in " + regionFile + ", unable to find timestamp of chunk " + x + ", " + z);
                     }
@@ -134,9 +130,6 @@ public class RegionUtils {
                     region.setChunkModifiedTimeAt(x, z, timestamp);
                 }
             }
-            // 清理工作
-            // 取消缓冲区引用
-            buffer = null;
         }
         return region;
     }
@@ -159,7 +152,6 @@ public class RegionUtils {
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 RandomAccessFile chunkReader = new RandomAccessFile(sourceFile, "r")
         ) {
-            GlobalLogger.fine("\tWriting the first sector of the mca file.");
             // 缓冲区
             byte[] dataBuf = new byte[4096];
             Chunk chunkTmp;
@@ -186,7 +178,6 @@ public class RegionUtils {
                     bos.write(dataBuf, 0, 4);
                 }
             }
-            GlobalLogger.fine("\tWriting the second sector of the mca file.");
             // 接着写入时间戳表
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {

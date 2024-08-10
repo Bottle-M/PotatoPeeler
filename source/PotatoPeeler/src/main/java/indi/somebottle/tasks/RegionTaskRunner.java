@@ -73,7 +73,7 @@ public class RegionTaskRunner implements Runnable {
                     try {
                         // 如果有的话尝试读取 .mca.bak
                         region = RegionUtils.readRegion(backupFile);
-                        // 把无法读取的 .mca 移除，然后把备份文件重命名为 .mca
+                        // 把无法读取的 .mca 移除，然后把备份文件重命名为 .mca，方便进行后面的流程
                         if (mcaFile.exists() && !mcaFile.delete()) {
                             GlobalLogger.warning("Failed to delete file: " + mcaFile.getAbsolutePath());
                             continue;
@@ -88,8 +88,6 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             }
-            // TODO：跳过 forceLoaded 的区块。用 R* 树，根据指定的区块保护区域建立索引。
-            // TODO：注意坐标要转换，Chunk 对象应当存储其绝对坐标，不然不好根据清单排除。
             // 扫描区域所有现存区块，进行筛选
             boolean hasModified = false; // 标记是否对区块进行了修改
             List<Chunk> existingChunks = region.getExistingChunks();

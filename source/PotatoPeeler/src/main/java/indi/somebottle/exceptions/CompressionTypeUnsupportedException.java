@@ -1,8 +1,6 @@
 package indi.somebottle.exceptions;
 
-import java.io.IOException;
-
-public class CompressionTypeUnsupportedException extends IOException {
+public class CompressionTypeUnsupportedException extends UnsupportedOperationException {
     /**
      * 自定义异常：压缩类型不支持
      *

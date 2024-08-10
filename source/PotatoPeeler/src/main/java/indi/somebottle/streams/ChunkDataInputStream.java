@@ -33,7 +33,7 @@ public class ChunkDataInputStream extends InputStream {
      * @throws IOException                         IO 异常
      * @throws CompressionTypeUnsupportedException 压缩类型不支持
      */
-    public ChunkDataInputStream(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
+    public ChunkDataInputStream(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException, CompressionTypeUnsupportedException {
         // 先把 RAF 包装成流，然后再用 InputStreamFactory 根据压缩类型获取解压流
         this.inflatedStream = DecompressedInputStreamFactory.getStream(compressionType, new RandomAccessInputStream(chunkReader, dataLen));
     }

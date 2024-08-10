@@ -8,6 +8,7 @@ import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.IntRange;
 import indi.somebottle.exceptions.NBTFormatException;
 import indi.somebottle.exceptions.RegionFormatException;
+import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
 import indi.somebottle.streams.ChunkDataInputStream;
 
 import java.io.*;
@@ -66,16 +67,12 @@ public class ChunkUtils {
         // 参考: https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F#%E5%8C%BA%E5%9F%9F
         int globalX = regionX << 5 | x;
         int globalZ = regionZ << 5 | z;
-        // 开一个 4 KiB × sectorsOccupiedInFile 的缓冲区
-        // 最多会读取这么多数据
-        byte[] buffer = new byte[4096 * sectorsOccupiedInFile];
-        int byteRead = 0;
+        byte[] buffer = new byte[4];
         // 先把指针移动到区块数据起始处
         reader.seek(offsetInFile);
         // 获得区块数据真实长度
         // 区块数据前 4 个字节是大端存储的
-        byteRead = reader.read(buffer, 0, 4);
-        if (byteRead < 4) {
+        if (reader.read(buffer, 0, 4) < 4) {
             // 读取失败
             throw new RegionFormatException("Chunk data error: unable to read data length of chunk (" + x + ", " + z + ")");
         }
@@ -106,7 +103,7 @@ public class ChunkUtils {
             long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
             // 构建新的区块对象
             return new Chunk(globalX, globalZ, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
-        } catch (NBTFormatException e) {
+        } catch (NBTFormatException | CompressionTypeUnsupportedException e) {
             // 发生 NBTFormatException 后加上区块坐标信息
             throw new RegionFormatException(e.getMessage() + " in chunk (" + x + ", " + z + ")");
         }
@@ -119,11 +116,12 @@ public class ChunkUtils {
      * @param dataLen         最多读取多少数据长度（记得去掉“压缩方式”占用的一个字节）
      * @param compressionType 压缩类型
      * @return 读取出的 InhabitedTime 数据（Long）
-     * @throws IOException        如果读取失败会抛出此异常
-     * @throws NBTFormatException 当区块数据有误，读取不到 InhabitedTime 时抛出
+     * @throws IOException                         如果读取失败会抛出此异常
+     * @throws NBTFormatException                  当区块数据有误，读取不到 InhabitedTime 时抛出
+     * @throws CompressionTypeUnsupportedException 如果压缩类型不支持会抛出此异常
      * @apiNote 调用前，请把 chunkReader 指针移动到开始读取的位置。注意，读取完毕后 chunkReader 指针应该在读取的最后一个字节处。
      */
-    public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException {
+    public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException, CompressionTypeUnsupportedException {
         // 其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
         try (ChunkDataInputStream cdis = new ChunkDataInputStream(chunkReader, dataLen, compressionType)) {
             if (IOUtils.findAndSkipBytes(cdis, INHABITED_TIME_TAG_BIN)) {

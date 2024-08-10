@@ -1,7 +1,5 @@
 package indi.somebottle.tasks;
 
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.entities.TaskParams;
 import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
@@ -30,9 +28,9 @@ public class RegionTaskDispatcher {
     // 标记是否已经开始运行任务
     private boolean started = false;
 
-    public RegionTaskDispatcher(int threadsNum,TaskParams params) {
+    public RegionTaskDispatcher(int threadsNum, TaskParams params) {
         this.threadsNum = threadsNum;
-        this.taskParams=params;
+        this.taskParams = params;
         // 指定线程数初始化线程池
         this.executor = Executors.newFixedThreadPool(threadsNum);
         // 为每个线程都初始化一个队列
@@ -61,6 +59,7 @@ public class RegionTaskDispatcher {
      *
      * @return 是否正常完成
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     public boolean waitForCompletion() {
         try {
             while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {

@@ -18,26 +18,27 @@ public class DecompressedInputStreamFactory {
      * 根据压缩类型获取区块数据读取器实例
      *
      * @param compressionType 压缩类型
-     * @param rais            RandomAccessInputStream 输入流
+     * @param is              InputStream 输入流
      * @return InputStream 实例
      * @throws CompressionTypeUnsupportedException 压缩类型不支持
      * @throws IOException                         IO 异常
      * @apiNote 请记得关闭流
      */
-    public static InputStream getStream(int compressionType, RandomAccessInputStream rais) throws IOException, CompressionTypeUnsupportedException {
+    @SuppressWarnings("EnhancedSwitchMigration")
+    public static InputStream getStream(int compressionType, InputStream is) throws IOException, CompressionTypeUnsupportedException {
         switch (compressionType) {
             case 1:
                 // GZip
-                return new GZIPInputStream(rais);
+                return new GZIPInputStream(is);
             case 2:
                 // Zlib
-                return new InflaterInputStream(rais);
+                return new InflaterInputStream(is);
             case 3:
                 // Uncompressed
-                return rais;
+                return is;
             case 4:
                 // LZ4
-                return new LZ4BlockInputStream(rais);
+                return new LZ4BlockInputStream(is);
         }
         // 其余情况不支持
         throw new CompressionTypeUnsupportedException("Compression type: " + compressionType + " unsupported.");

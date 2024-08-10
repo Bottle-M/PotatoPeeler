@@ -17,7 +17,7 @@ public class NumUtils {
     private static final long BYTES_PER_KIB = 1L << 10;
 
     /**
-     * 字节序列按大端转换为数值（最高支持 8 字节） <br>
+     * 字节序列按大端转换为 long 数值（最高支持 8 字节） <br>
      * - buf 小于 8 字节时，只适合无符号数（不然负数处理后会丢失符号） <br>
      * - 当 buf 正好是 8 字节，就会转换为带符号的 long 类型
      *
@@ -40,7 +40,9 @@ public class NumUtils {
 
     /**
      * 把 long 类型数值按 width 字节数转换为大端字节序列，存入 buf <br>
-     * （最高支持 8 字节）
+     * （最高支持 8 字节） <br>
+     * - 不足 8 字节时只能用于无符号数转换 <br>
+     * - 当 width 正好是 8 字节时，可以用于带符号的 long 类型转换
      *
      * @param value long 类型数值
      * @param buf   存储字节序列的 byte[]
