@@ -18,6 +18,11 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        // 如果一个参数都没有
+        if (args.length == 0) {
+            GlobalLogger.info("Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
+            System.exit(0);
+        }
         // 获得 JVM 参数
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         // 初始化 PotatoPeeler 参数
@@ -207,28 +212,30 @@ public class Main {
      * 打印帮助信息，当命令行选项有 --help 时执行
      */
     public static void printHelp() {
+        System.out.println();
         System.out.println("Potato Peeler - A simple tool to remove unused chunks from Minecraft worlds.");
         System.out.println();
         System.out.println("Author: github.com/SomeBottle");
         System.out.println();
-        System.out.println("Usage: java -jar [jvm-options] PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...] [--server-jar <server.jar>]");
+        System.out.println("Usage: ");
+        System.out.println("\tjava [jvm-options] -jar PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...] [--server-jar <server.jar>]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  --help                           Show this help message and exit.");
-        System.out.println("  --min-inhabited <ticks>          Minimum inhabited time (in ticks) for a chunk to be considered unused. (default: 0)");
-        System.out.println("  --cool-down <minutes>            Cool down period (in minutes) after the last run before Potato Peeler can run again. (default: 0)");
-        System.out.println("  --mca-modifiable-delay <minutes> Delay (in minutes) after the creation of an MCA file before the chunks of it can be removed. (default: 0)");
-        System.out.println("  --threads-num <number>           Number of worker threads to use. (default: 10)");
-        System.out.println("  --verbose                        Enable verbose output.");
-        System.out.println("  --skip-peeler                    Skip the Potato Peeler process.");
-        System.out.println("  --protected-chunks <path>        Path to the protected chunks list file. (default: ./protected_chunks.list)");
-        System.out.println("  --server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
+        System.out.println("\t--help                           Show this help message and exit.");
+        System.out.println("\t--min-inhabited <ticks>          Minimum inhabited time (in ticks) for a chunk to be considered unused. (default: 0)");
+        System.out.println("\t--cool-down <minutes>            Cooldown period (in minutes) after the last run before Potato Peeler can run again. (default: 0)");
+        System.out.println("\t--mca-modifiable-delay <minutes> Delay (in minutes) after the creation of an MCA file before its chunks can be removed. (default: 0)");
+        System.out.println("\t--threads-num <number>           Number of worker threads to use. (default: 10)");
+        System.out.println("\t--verbose                        Enable verbose output.");
+        System.out.println("\t--skip-peeler                    Skip the Potato Peeler process.");
+        System.out.println("\t--protected-chunks <path>        Path to the file listing protected chunks. (default: ./protected_chunks.list)");
+        System.out.println("\t--server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
         System.out.println();
         System.out.println("Example:");
-        System.out.println("  java -jar -Xmx4G PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
+        System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
         System.out.println();
         System.out.println("Note:");
-        System.out.println("  - The world directories should be separated by commas without spaces.");
-        System.out.println("  - The server JAR file will be launched in the current JVM after the Potato Peeler process completes, and the remaining arguments will be passed to the server, including JVM options.");
+        System.out.println("\t- World paths passed to '--world-dirs' should be separated by commas without any spaces.");
+        System.out.println("\t- After the Potato Peeler process completes, the server JAR file will be launched in the current JVM. Any remaining arguments, including JVM options, will be passed to the server jar.");
     }
 }
