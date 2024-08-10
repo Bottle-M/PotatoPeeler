@@ -1,6 +1,9 @@
 package indi.somebottle.tasks;
 
+import com.github.davidmoten.rtree2.RTree;
+import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.PeelResult;
+import indi.somebottle.entities.TaskParams;
 import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
 import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
 import indi.somebottle.logger.GlobalLogger;
@@ -14,9 +17,8 @@ import java.util.concurrent.*;
 
 // 此类用于把 .mca 文件分配给多个线程进行处理
 public class RegionTaskDispatcher {
-    private final long minInhabited;
-    private final long mcaModifiableDelay;
     private final int threadsNum;
+    private final TaskParams taskParams;
     private final ExecutorService executor;
     // 存放 .mca 文件对象的队列
     // 每个线程都有一个
@@ -28,10 +30,9 @@ public class RegionTaskDispatcher {
     // 标记是否已经开始运行任务
     private boolean started = false;
 
-    public RegionTaskDispatcher(long minInhabited, long mcaModifiableDelay, int threadsNum) {
-        this.minInhabited = minInhabited;
-        this.mcaModifiableDelay = mcaModifiableDelay;
+    public RegionTaskDispatcher(int threadsNum,TaskParams params) {
         this.threadsNum = threadsNum;
+        this.taskParams=params;
         // 指定线程数初始化线程池
         this.executor = Executors.newFixedThreadPool(threadsNum);
         // 为每个线程都初始化一个队列
@@ -106,7 +107,7 @@ public class RegionTaskDispatcher {
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), minInhabited, mcaModifiableDelay);
+            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), taskParams);
             taskRunners.add(runner);
             executor.submit(runner);
         }

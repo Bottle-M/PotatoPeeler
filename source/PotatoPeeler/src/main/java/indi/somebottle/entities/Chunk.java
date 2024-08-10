@@ -10,13 +10,13 @@ public class Chunk {
      */
     private final int sectorsOccupiedInFile;
     /**
-     * 此区块在相应区域内的局部坐标 x，从 0 至 31
+     * 此区块在整个世界中的 x 坐标
      */
-    private final int x;
+    private final int globalX;
     /**
-     * 此区块在相应区域内的局部坐标 z，从 0 至 31
+     * 此区块在整个世界中的 z 坐标
      */
-    private final int z;
+    private final int globalZ;
     /**
      * 此区块的 InhabitedTime （Tick）
      */
@@ -33,9 +33,19 @@ public class Chunk {
      */
     private boolean deleteFlag = false;
 
-    public Chunk(int x, int z, long offsetInFile, int sectorsOccupiedInFile, long inhabitedTime, boolean overSized) {
-        this.x = x;
-        this.z = z;
+    /**
+     * 构造区块对象
+     *
+     * @param globalX               区块在整个世界中的 x 坐标
+     * @param globalZ               区块在整个世界中的 z 坐标
+     * @param offsetInFile          区块数据在原文件中距离起始的字节数
+     * @param sectorsOccupiedInFile 这个区块在原文件中占用了多少扇区（4 KiB）
+     * @param inhabitedTime         InhabitedTime （Tick）
+     * @param overSized             是否超出了 255 个扇区（1020 KiB）的大小
+     */
+    public Chunk(int globalX, int globalZ, long offsetInFile, int sectorsOccupiedInFile, long inhabitedTime, boolean overSized) {
+        this.globalX = globalX;
+        this.globalZ = globalZ;
         this.offsetInFile = offsetInFile;
         this.sectorsOccupiedInFile = sectorsOccupiedInFile;
         this.inhabitedTime = inhabitedTime;
@@ -88,21 +98,21 @@ public class Chunk {
     }
 
     /**
-     * 获得局部 x 坐标
+     * 获得区块在整个世界中的全局坐标
      *
-     * @return 局部 x 坐标
+     * @return 全局 x 坐标（32 bit 有符号整数）
      */
-    public int getX() {
-        return x;
+    public int getGlobalX() {
+        return globalX;
     }
 
     /**
-     * 获得局部 z 坐标
+     * 获得区块在整个世界中的全局坐标
      *
-     * @return 局部 z 坐标
+     * @return 全局 z 坐标（32 bit 有符号整数）
      */
-    public int getZ() {
-        return z;
+    public int getGlobalZ() {
+        return globalZ;
     }
 
     /**
@@ -119,8 +129,8 @@ public class Chunk {
         return "Chunk{" +
                 "offsetInFile=" + offsetInFile +
                 ", sectorsOccupiedInFile=" + sectorsOccupiedInFile +
-                ", x=" + x +
-                ", z=" + z +
+                ", x=" + globalX +
+                ", z=" + globalZ +
                 ", inhabitedTime=" + inhabitedTime +
                 ", overSized=" + overSized +
                 '}';

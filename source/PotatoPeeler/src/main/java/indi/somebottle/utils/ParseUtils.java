@@ -5,11 +5,11 @@ import indi.somebottle.entities.IntRange;
 import java.io.IOException;
 
 /**
- * 此类是用于处理 CoordsRange 等区间的工具类
+ * 此类是用于处理解析的工具类
  */
-public class RangeUtils {
+public class ParseUtils {
     /**
-     * 内部方法，解析得到受保护区块清单每行中的单个 IntRange <br>
+     * 解析得到受保护区块清单每行中的单个 IntRange <br>
      *
      * @param rangeStr 字符串形式的范围，形如 "x1-x2"，其中 x2 可选，x1 和 x2 都可以是 '*'
      * @return IntRange 对象

@@ -111,7 +111,7 @@ public class RegionUtils {
                     }
                     // 继续读取区块
                     try {
-                        Chunk chunk = ChunkUtils.readChunk(chunkReader, chunkOffset, sectorsOccupied, x, z);
+                        Chunk chunk = ChunkUtils.readChunk(chunkReader, chunkOffset, sectorsOccupied, x, z, region.getRegionX(), region.getRegionZ());
                         // 初始化区域对象中的区块结构
                         region.initChunkAt(x, z, chunk);
                     } catch (RegionFormatException e) {

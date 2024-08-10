@@ -9,9 +9,9 @@ import java.util.List;
 
 public class Region {
     // 此区域的 x 坐标
-    private final long regionX;
+    private final int regionX;
     // 此区域的 z 坐标
-    private final long regionZ;
+    private final int regionZ;
     /**
      * 一个区域内有 32×32=1024 个区块
      */
@@ -31,28 +31,28 @@ public class Region {
         // 文件名格式： r.<regionX>.<regionZ>.mca
         String[] mcaNameParts = regionFile.getName().split("\\.");
         try {
-            this.regionX = Long.parseLong(mcaNameParts[1]);
-            this.regionZ = Long.parseLong(mcaNameParts[2]);
+            this.regionX = Integer.parseInt(mcaNameParts[1]);
+            this.regionZ = Integer.parseInt(mcaNameParts[2]);
         } catch (Exception e) {
             throw new RegionPosNotFoundException("Invalid region file name: " + regionFile.getName());
         }
     }
 
     /**
-     * 获得本区域的 X 坐标
+     * 获得本区域的 X 坐标（32 bit 有符号整数）
      *
      * @return X 坐标
      */
-    public long getRegionX() {
+    public int getRegionX() {
         return regionX;
     }
 
     /**
-     * 获得本区域的 Z 坐标
+     * 获得本区域的 Z 坐标（32 bit 有符号整数）
      *
      * @return Z 坐标
      */
-    public long getRegionZ() {
+    public int getRegionZ() {
         return regionZ;
     }
 

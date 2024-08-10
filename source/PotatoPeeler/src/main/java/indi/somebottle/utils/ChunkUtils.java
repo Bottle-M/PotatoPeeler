@@ -17,12 +17,6 @@ import java.util.zip.GZIPInputStream;
  * 区块 Chunk 相关的工具方法
  */
 public class ChunkUtils {
-    /**
-     * 区块数据部分的最大长度
-     * <p> </p>
-     * 这其实是受限于区块整体占用的扇区数，最多只能有 255 个扇区，去掉头部的 5 字节，所以最多有 255*4096-5 字节。
-     */
-    public static final int MAX_CHUNK_DATA_LEN = 255 * 4096 - 5;
 
     /**
      * nbt 二进制数据中的 InhabitedTime 标签部分的十六进制表示 <br>
@@ -58,13 +52,20 @@ public class ChunkUtils {
      * @param reader                mca 文件 RandomAccessFile 对象
      * @param offsetInFile          区块数据起始位置距离 Region 文件开头的偏移
      * @param sectorsOccupiedInFile 区块占用的扇区数
-     * @param x                     区块在区域内的局部坐标 x
-     * @param z                     区块在区域内的局部坐标 z
+     * @param x                     区块在区域内的局部坐标 x（0-31）
+     * @param z                     区块在区域内的局部坐标 z（0-31）
+     * @param regionX               区块所在区域的 X 坐标
+     * @param regionZ               区块所在区域的 Z 坐标
      * @return Chunk 对象
      * @throws RegionFormatException 当区块数据有误时抛出
      * @apiNote 注意：这个方法会改变 RandomAccessFile 的指针位置
      */
-    public static Chunk readChunk(RandomAccessFile reader, long offsetInFile, int sectorsOccupiedInFile, int x, int z) throws IOException {
+    public static Chunk readChunk(RandomAccessFile reader, long offsetInFile, int sectorsOccupiedInFile, int x, int z, int regionX, int regionZ) throws IOException {
+        // 把区块局部坐标转换为全局坐标
+        // 低 5 位为区块局部坐标，高 27 位为区域坐标
+        // 参考: https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F#%E5%8C%BA%E5%9F%9F
+        int globalX = regionX << 5 | x;
+        int globalZ = regionZ << 5 | z;
         // 开一个 4 KiB × sectorsOccupiedInFile 的缓冲区
         // 最多会读取这么多数据
         byte[] buffer = new byte[4096 * sectorsOccupiedInFile];
@@ -81,24 +82,30 @@ public class ChunkUtils {
         // 按大端方式转换为整数，因为有 4 个字节，而 Java 没有无符号数，这里需要用 long 进行存储
         // long chunkDataLen = (long) (buffer[0] & 0xFF) << 24 | (long) (buffer[1] & 0xFF) << 16 | (long) (buffer[2] & 0xFF) << 8 | (long) (buffer[3] & 0xFF);
         long chunkDataLen = NumUtils.bigEndianToLong(buffer, 4);
-        // 因为这个是从压缩方式这一个字节开始算的，因此还要减去 1 字节
+        // 因为这个是从压缩方式这一个字节开始算的，因此实际数据长度还要减去 1 字节
         chunkDataLen--;
-        if (chunkDataLen > MAX_CHUNK_DATA_LEN) {
-            // 对于超出 MAX_CHUNK_DATA_LEN 的区块应当设定为 overSized，且不读取其 inhabitedTime，直接返回
-            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, -1, true);
-        }
         // 继续读取 1 个字节，这个字节是压缩格式
         int compressionType = reader.read();
         if (compressionType < 0) {
             // 读取失败
             throw new RegionFormatException("Chunk data error: unable to read compression type of chunk (" + x + ", " + z + ")");
         }
-        // 接下来把区块数据读入缓冲区
+        /*
+            数据长度超出 255 个扇区的区块，其压缩类型的最高字节会被标记为 1，此时其值会 > 128
+            SomeBottle 2024.8.10
+            参考:
+                - https://minecraft.wiki/w/Region_file_format#Payload
+                - https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F
+         */
+        if (compressionType > 128) {
+            // 对于超出 255 个扇区的区块应当设定为 overSized，且不读取其 inhabitedTime，直接返回
+            return new Chunk(globalX, globalZ, offsetInFile, sectorsOccupiedInFile, -1, true);
+        }
         try {
             // 此处 reader 指针已经指向区块数据起始字节
             long inhabitedTime = findInhabitedTime(reader, (int) chunkDataLen, compressionType);
             // 构建新的区块对象
-            return new Chunk(x, z, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
+            return new Chunk(globalX, globalZ, offsetInFile, sectorsOccupiedInFile, inhabitedTime, false);
         } catch (NBTFormatException e) {
             // 发生 NBTFormatException 后加上区块坐标信息
             throw new RegionFormatException(e.getMessage() + " in chunk (" + x + ", " + z + ")");
@@ -148,11 +155,13 @@ public class ChunkUtils {
      * @throws IOException 文件读取出错时抛出
      */
     public static RTree<Boolean, Geometry> readProtectedChunks(File listFile) throws IOException {
-        // TODO：待测试：应当支持类似 .gitignore 的 # 注释
-        // TODO：待测试：每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
+        // 支持类似 .gitignore 的 # 注释
+        // 每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
         long lineCnt = 0; // 记录行号，方便定位错误
         // R* 树
-        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(4).create();
+        // 默认配置下 maxChildren=4, minChildren=round(4*0.4)=2
+        // 详见：https://github.com/davidmoten/rtree2/blob/45d209dff7d407632abfe7c67e2ff90f6ff24f03/src/main/java/com/github/davidmoten/rtree2/RTree.java#L348
+        RTree<Boolean, Geometry> tree = RTree.star().create();
         String line;
         try (
                 FileReader fr = new FileReader(listFile);
@@ -172,8 +181,8 @@ public class ChunkUtils {
                 if (parts.length != 2)
                     throw new IOException("Line " + lineCnt + ": Invalid line here: '" + line + "'");
                 try {
-                    IntRange xRange = RangeUtils.parseSingleIntRange(parts[0]);
-                    IntRange zRange = RangeUtils.parseSingleIntRange(parts[1]);
+                    IntRange xRange = ParseUtils.parseSingleIntRange(parts[0]);
+                    IntRange zRange = ParseUtils.parseSingleIntRange(parts[1]);
                     // tree immutable
                     // 注意 RangeUtils.parseSingleIntRange 方法保证 to > from，这也是 rtree 构建时的要求
                     // 采用双精度浮点数，不然 32 位有符号整数转换时可能损失精度
@@ -206,7 +215,8 @@ public class ChunkUtils {
     }
 
     /**
-     * 把强制加载区块文件中的区块存入受保护名单（R* 树索引）
+     * 把强制加载区块文件中的区块存入受保护名单（R* 树索引）<br>
+     * - 这个文件是用 GZip 压缩的。
      *
      * @param tree                  R* 树对象
      * @param forceLoadedChunksFile 强制加载区块存储文件的 File 对象

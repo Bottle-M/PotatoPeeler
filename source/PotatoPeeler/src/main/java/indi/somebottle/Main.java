@@ -3,6 +3,7 @@ package indi.somebottle;
 import com.github.davidmoten.rtree2.RTree;
 import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.PeelResult;
+import indi.somebottle.entities.TaskParams;
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
@@ -82,20 +83,22 @@ public class Main {
         GlobalLogger.info("Skip peeler: " + skipPeeler);
         GlobalLogger.info("Protected chunks list path: " + protectedListPath);
         GlobalLogger.info("World dir paths: ");
+        GlobalLogger.info("==================================");
         for (String worldDirPath : worldDirPaths) {
             GlobalLogger.info("\t" + worldDirPath);
         }
         // 如果受保护区块清单未创建则进行建立，并进行读取，构建索引（R* 树）
-        RTree<Boolean, Geometry> protectedChunksTree;
+        RTree<Boolean, Geometry> protectedChunksTree = null;
         try {
             File protectedListFile = new File(protectedListPath);
             if (!protectedListFile.exists() && !protectedListFile.createNewFile()) {
-                throw new IOException("Unable to create.");
+                throw new IOException("Unable to create " + protectedListFile.getAbsolutePath());
             }
             if (!protectedListFile.isFile()) {
-                throw new IOException("Not a file.");
+                throw new IOException(protectedListFile.getAbsolutePath() + " is not a file.");
             }
             protectedChunksTree = ChunkUtils.readProtectedChunks(protectedListFile);
+            GlobalLogger.info("Protected chunks read.");
         } catch (IOException e) {
             GlobalLogger.severe("Failed to read protected chunks list file: " + protectedListPath, e);
             System.exit(1);
@@ -146,7 +149,9 @@ public class Main {
                     // TODO：读取 chunks.dat，把 forceLoaded 的区块加入 R* Tree
                     // 对于每个世界都进行处理
                     GlobalLogger.info("Processing " + worldDirPath + "...");
-                    PeelResult peelResult = Potato.peel(worldDirPath, minInhabited, mcaModifiableDelay, threadsNum);
+                    // 任务参数
+                    TaskParams params = new TaskParams(minInhabited, mcaModifiableDelay, protectedChunksTree);
+                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, params);
                     GlobalLogger.info("=========== WORLD RESULT ============");
                     GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
@@ -159,6 +164,9 @@ public class Main {
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过
                     GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", skipped.", e);
+                } catch (IOException e) {
+                    // IO 异常
+                    GlobalLogger.severe("I/O Exception occurred while processing world: " + worldDirPath + ", skipped.", e);
                 } catch (RegionTaskInterruptedException e) {
                     // 发生了区域处理被中断的异常
                     GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", interrupted.", e);

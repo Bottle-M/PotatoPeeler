@@ -18,7 +18,8 @@ public class RTreeTest {
             e.printStackTrace();
         }*/
         // R* 树
-        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(4).create();
+        // 默认配置下 maxChildren=4, minChildren=round(4*0.4)=2
+        RTree<Boolean, Geometry> tree = RTree.star().create();
         for (int i = 0; i < 100; i++) {
             // 随机生成 100 个矩形，模拟 100 个不同大小的受保护区块区域
             // 注意 x2 必须大于 x1, y2 必须大于 y1

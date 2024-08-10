@@ -3,7 +3,9 @@ package indi.somebottle.tasks;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.entities.Region;
+import indi.somebottle.entities.TaskParams;
 import indi.somebottle.logger.GlobalLogger;
+import indi.somebottle.utils.ChunkUtils;
 import indi.somebottle.utils.RegionUtils;
 
 import java.io.File;
@@ -16,15 +18,13 @@ import java.util.Queue;
 
 // 实现 Runnable，在一个线程内从队列中取出 .mca 文件进行处理
 public class RegionTaskRunner implements Runnable {
-    private final long minInhabited;
-    private final long mcaModifiableDelay;
+    private final TaskParams params; // 任务参数
     private final Queue<File> queue; // 此线程独有的任务队列
     private final PeelResult taskResult = new PeelResult(); // 存储本线程任务结果
 
-    public RegionTaskRunner(Queue<File> queue, long minInhabited, long mcaModifiableDelay) {
+    public RegionTaskRunner(Queue<File> queue, TaskParams params) {
         this.queue = queue;
-        this.minInhabited = minInhabited;
-        this.mcaModifiableDelay = mcaModifiableDelay;
+        this.params = params;
     }
 
     /**
@@ -53,10 +53,11 @@ public class RegionTaskRunner implements Runnable {
             // 备份 MCA 文件路径
             Path backupMCAPath = originalMCAPath.resolveSibling(originalMCAPath.getFileName() + ".bak");
             // 备份 MCA 文件对象
-            File backupFile = new File(backupMCAPath.toString());
+            File backupFile = backupMCAPath.toFile();
             // 先检查自 mca 文件创建以来过去了多久
-            if (mcaFile.exists() && System.currentTimeMillis() - mcaFile.lastModified() < mcaModifiableDelay * 60 * 1000) {
+            if (mcaFile.exists() && System.currentTimeMillis() - mcaFile.lastModified() < params.mcaModifiableDelay * 60 * 1000) {
                 // 说明 mca 文件创建时间距离现在还不够久，不能修改
+                GlobalLogger.fine(mcaFile.getAbsolutePath() + " has just been created, ignored.");
                 continue;
             }
             // 先读取 Region 文件
@@ -87,18 +88,25 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             }
-            // TODO：跳过 forceLoaded 的区块。可以先用 排序+二分查找 实现支持区间的区块移除黑名单机制，对于 x 和 z 两个方向要分别建立一个区间有序列表。
+            // TODO：跳过 forceLoaded 的区块。用 R* 树，根据指定的区块保护区域建立索引。
+            // TODO：注意坐标要转换，Chunk 对象应当存储其绝对坐标，不然不好根据清单排除。
             // 扫描区域所有现存区块，进行筛选
             boolean hasModified = false; // 标记是否对区块进行了修改
             List<Chunk> existingChunks = region.getExistingChunks();
             for (Chunk chunk : existingChunks) {
                 if (chunk.isOverSized()) {
                     // 如果区块数据较多，就不进行删除
+                    GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is oversize, ignored.");
                     continue;
                 }
-                if (chunk.getInhabitedTime() <= minInhabited) {
+                if (ChunkUtils.isProtectedChunk(params.protectedChunksTree, chunk.getGlobalX(), chunk.getGlobalZ())) {
+                    // 如果区块在保护范围内，就不进行删除
+                    GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is protected, ignored.");
+                    continue;
+                }
+                if (chunk.getInhabitedTime() <= params.minInhabited) {
                     // 如果区块的 inhabitedTime 小于等于阈值，就将其标记为待删除
-                    GlobalLogger.fine("Removed chunk at (" + chunk.getX() + "," + chunk.getZ() + ") in " + mcaFile.getName());
+                    GlobalLogger.fine("Removed chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName());
                     chunk.setDeleteFlag(true);
                     chunksRemoved++;
                     hasModified = true;
