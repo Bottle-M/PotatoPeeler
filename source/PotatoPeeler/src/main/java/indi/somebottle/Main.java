@@ -88,12 +88,13 @@ public class Main {
         GlobalLogger.info("Skip peeler: " + skipPeeler);
         GlobalLogger.info("Protected chunks list path: " + protectedListPath);
         GlobalLogger.info("World dir paths: ");
-        GlobalLogger.info("==================================");
         for (String worldDirPath : worldDirPaths) {
             GlobalLogger.info("\t" + worldDirPath);
         }
+        GlobalLogger.info("==================================");
         // 如果受保护区块清单未创建则进行建立，并进行读取，构建索引（R* 树）
         RTree<Boolean, Geometry> protectedChunksTree = null;
+        // TODO：不同维度应当有各自的受保护区块清单
         try {
             File protectedListFile = new File(protectedListPath);
             if (!protectedListFile.exists() && !protectedListFile.createNewFile()) {

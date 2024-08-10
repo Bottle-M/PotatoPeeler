@@ -80,11 +80,18 @@ public class RegionUtils {
             // 一共有 1024 个区块的偏移和长度数据，逐个读取
             /*
              * 注意，如果你改变了这里的遍历顺序，那么底下 writeRegion 拷贝区块数据的逻辑就要重写。
+             *  SomeBottle 2024.8.5
              *
-             * SomeBottle 2024.8.5
+             * 今天测试时才发现我全写反了，铸币啊我是！
+             * for (int x = 0; x < 32; x++) {
+             *  for (int z = 0; z < 32; z++) {
+             * 这样写是先递增 z, z 到达 31 之后回到 0，x 递增 1
+             * 但是 wiki 里是：x 先递增。
+             *  SomeBottle 2024.8.5
              */
-            for (int x = 0; x < 32; x++) {
-                for (int z = 0; z < 32; z++) {
+            // TODO：重新测试 forceloaded 区块的保留
+            for (int z = 0; z < 32; z++) {
+                for (int x = 0; x < 32; x++) {
                     // 先读取距离文件起点的偏移扇区数目
                     // 前 3 B 是大端存储的偏移扇区数目
                     if (regionStream.read(buffer, 0, 3) < 3) {
@@ -119,8 +126,8 @@ public class RegionUtils {
             }
             // 读取时间戳表到 Region 中
             // 紧接着的是 1024 个 4 字节大端时间戳（纪元秒）
-            for (int x = 0; x < 32; x++) {
-                for (int z = 0; z < 32; z++) {
+            for (int z = 0; z < 32; z++) {
+                for (int x = 0; x < 32; x++) {
                     if (regionStream.read(buffer, 0, 4) < 4) {
                         // 读取失败，文件格式错误
                         throw new RegionFormatException("MCA File format error in " + regionFile + ", unable to find timestamp of chunk " + x + ", " + z);
@@ -158,8 +165,8 @@ public class RegionUtils {
             // 写入区块偏移和长度表
             // 记录当前区块起始位置在 mca 文件中的偏移扇区数
             int currChunkOffset = 2; // 初始为 2 个扇区
-            for (int x = 0; x < 32; x++) {
-                for (int z = 0; z < 32; z++) {
+            for (int z = 0; z < 32; z++) {
+                for (int x = 0; x < 32; x++) {
                     chunkTmp = region.getChunkAt(x, z);
                     if (chunkTmp == null || chunkTmp.isDeleteFlag()) {
                         // 如果区块不存在，或者被标记为移除，直接写入 4 个零字节
@@ -179,8 +186,8 @@ public class RegionUtils {
                 }
             }
             // 接着写入时间戳表
-            for (int x = 0; x < 32; x++) {
-                for (int z = 0; z < 32; z++) {
+            for (int z = 0; z < 32; z++) {
+                for (int x = 0; x < 32; x++) {
                     chunkTmp = region.getChunkAt(x, z);
                     if (chunkTmp == null || chunkTmp.isDeleteFlag()) {
                         // 若区块不存在或被标记为已删除，时间戳 4 字节置 0
@@ -193,7 +200,6 @@ public class RegionUtils {
                     bos.write(dataBuf, 0, 4);
                 }
             }
-            GlobalLogger.fine("\tCopying chunk data.");
             // 最后拷贝现存区块的数据
             // 因为区块占用的空间实际上以扇区为单位，因此这里其实就是把原文件中区块对应的扇区复制过来
             // 因为在记录现存区块时的扫描顺序也是 x:0-31, z:0-31，故 getExistingChunks 得到的列表
