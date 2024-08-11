@@ -5,7 +5,6 @@ import indi.somebottle.entities.PeelResult;
 import indi.somebottle.entities.Region;
 import indi.somebottle.entities.TaskParams;
 import indi.somebottle.logger.GlobalLogger;
-import indi.somebottle.utils.ChunkUtils;
 import indi.somebottle.utils.RegionUtils;
 
 import java.io.File;
@@ -97,7 +96,7 @@ public class RegionTaskRunner implements Runnable {
                     GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is oversize, ignored.");
                     continue;
                 }
-                if (ChunkUtils.isProtectedChunk(params.protectedChunksTree, chunk.getGlobalX(), chunk.getGlobalZ())) {
+                if (params.protectedChunksIndex.contains(chunk.getGlobalX(), chunk.getGlobalZ())) {
                     // 如果区块在保护范围内，就不进行删除
                     GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is protected, ignored.");
                     continue;

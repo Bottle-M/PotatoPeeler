@@ -31,8 +31,6 @@ public class ArgsUtils {
         PEELER_ARGS.put("--cool-down", true);
         // 处理时采用的线程数
         PEELER_ARGS.put("--threads-num", true);
-        // 受保护区块清单路径
-        PEELER_ARGS.put("--protected-chunks", true);
         // 让程序打印使用信息
         PEELER_ARGS.put("--help", false);
     }
@@ -123,10 +121,6 @@ public class ArgsUtils {
         // 如果没有指定世界路径，默认为空
         if (!peelerArgs.containsKey("--world-dirs")) {
             peelerArgs.put("--world-dirs", "");
-        }
-        // 如果没有指定受保护区块清单，默认为 protected_chunks.list
-        if (!peelerArgs.containsKey("--protected-chunks")) {
-            peelerArgs.put("--protected-chunks", "protected_chunks.list");
         }
     }
 

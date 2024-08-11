@@ -30,7 +30,7 @@ public class RTreeTest {
         long startTime = System.currentTimeMillis();
         // 1024 * 1000 次查询
         for (int i = 0; i < 1024 * 1000; i++) {
-            Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) rd.nextInt(), (double) rd.nextInt()));
+            Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) rd.nextInt(), rd.nextInt()));
             if (results.iterator().hasNext()) {
                 hitNum++;
             } else {

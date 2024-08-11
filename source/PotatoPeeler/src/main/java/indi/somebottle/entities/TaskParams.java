@@ -1,13 +1,12 @@
 package indi.somebottle.entities;
 
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometry;
+import indi.somebottle.indexing.ChunksSpatialIndex;
 
 /**
  * 任务参数 <br>
  * - minInhabited InhabitedTime 阈值 <br>
  * - mcaModifiableDelay mca 文件创建后多久能删除（分钟） <br>
- * - protectedChunksTree 所有受保护区块区域的索引 R* 树
+ * - protectedChunksTree 所有受保护区块的区块空间索引
  */
 public class TaskParams {
     /**
@@ -19,20 +18,20 @@ public class TaskParams {
      */
     public long mcaModifiableDelay;
     /**
-     * 所有受保护区块区域的索引 R* 树
+     * 所有受保护区块区域的区块空间索引
      */
-    public RTree<Boolean, Geometry> protectedChunksTree;
+    public ChunksSpatialIndex protectedChunksIndex;
 
     /**
      * 构造任务参数
      *
-     * @param minInhabited        InhabitedTime 阈值
-     * @param mcaModifiableDelay  mca 文件创建后多久能删除（分钟）
-     * @param protectedChunksTree 所有受保护区块区域的索引 R* 树
+     * @param minInhabited         InhabitedTime 阈值
+     * @param mcaModifiableDelay   mca 文件创建后多久能删除（分钟）
+     * @param protectedChunksIndex 区块空间索引对象
      */
-    public TaskParams(long minInhabited, long mcaModifiableDelay, RTree<Boolean, Geometry> protectedChunksTree) {
+    public TaskParams(long minInhabited, long mcaModifiableDelay, ChunksSpatialIndex protectedChunksIndex) {
         this.minInhabited = minInhabited;
         this.mcaModifiableDelay = mcaModifiableDelay;
-        this.protectedChunksTree = protectedChunksTree;
+        this.protectedChunksIndex = protectedChunksIndex;
     }
 }

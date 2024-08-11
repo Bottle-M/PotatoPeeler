@@ -15,7 +15,7 @@ Maybe a Java implementation of [Thanos](https://github.com/aternosorg/thanos).
 4. 使用方式（作为独立工具使用 / 作为服务器 Wrapper 使用）
 5. unsuitable-scenarios
 6. 对于原版存档格式可以像这样指定不同维度的数据目录：`world`, `world/DIM-1`。
-7. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）（保证 to > from）（写的是区块坐标）
+7. 不会移除被 `/forceload` 强制加载的区块，以及区块保护名单（这个名单像 `.gitignore` 那样支持 `#` 注释）的使用（实现是 R* Tree）（保证 to > from）（写的是区块坐标）（每个维度都有一个，放在维度根目录下）
 8. 配置项中带数值的一定要写单位。
 9. 一些常见的使用用例 Examples
 

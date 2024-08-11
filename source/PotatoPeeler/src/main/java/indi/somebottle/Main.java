@@ -1,16 +1,12 @@
 package indi.somebottle;
 
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.PeelResult;
-import indi.somebottle.entities.TaskParams;
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
 import indi.somebottle.exceptions.RegionTaskInterruptedException;
 import indi.somebottle.logger.GlobalLogger;
 import indi.somebottle.utils.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -77,7 +73,6 @@ public class Main {
         long mcaModifiableDelay = Long.parseLong(peelerArgs.get("--mca-modifiable-delay"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
         boolean skipPeeler = peelerArgs.containsKey("--skip-peeler");
-        String protectedListPath = peelerArgs.get("--protected-chunks");
         // 列出 PotatoPeeler 相关的参数
         GlobalLogger.info("====== POTATO-PEELER PARAMS ======");
         GlobalLogger.info("Min inhabited time (tick): " + minInhabited);
@@ -86,29 +81,11 @@ public class Main {
         GlobalLogger.info("Worker threads num: " + threadsNum);
         GlobalLogger.info("Verbose output: " + verboseOutput);
         GlobalLogger.info("Skip peeler: " + skipPeeler);
-        GlobalLogger.info("Protected chunks list path: " + protectedListPath);
         GlobalLogger.info("World dir paths: ");
         for (String worldDirPath : worldDirPaths) {
             GlobalLogger.info("\t" + worldDirPath);
         }
         GlobalLogger.info("==================================");
-        // 如果受保护区块清单未创建则进行建立，并进行读取，构建索引（R* 树）
-        RTree<Boolean, Geometry> protectedChunksTree = null;
-        // TODO：不同维度应当有各自的受保护区块清单
-        try {
-            File protectedListFile = new File(protectedListPath);
-            if (!protectedListFile.exists() && !protectedListFile.createNewFile()) {
-                throw new IOException("Unable to create " + protectedListFile.getAbsolutePath());
-            }
-            if (!protectedListFile.isFile()) {
-                throw new IOException(protectedListFile.getAbsolutePath() + " is not a file.");
-            }
-            protectedChunksTree = ChunkUtils.readProtectedChunks(protectedListFile);
-            GlobalLogger.info("Protected chunks read.");
-        } catch (IOException e) {
-            GlobalLogger.severe("Failed to read protected chunks list file: " + protectedListPath, e);
-            System.exit(1);
-        }
         // 在 minInhabited > 200 时发出警告
         if (minInhabited > 200) {
             GlobalLogger.warning("****** WARNING ******");
@@ -153,10 +130,9 @@ public class Main {
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
-                    GlobalLogger.info("Processing " + worldDirPath + "...");
+                    GlobalLogger.info(">>> Processing " + worldDirPath + "...");
                     // 任务参数
-                    TaskParams params = new TaskParams(minInhabited, mcaModifiableDelay, protectedChunksTree);
-                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, params);
+                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited, mcaModifiableDelay);
                     GlobalLogger.info("=========== WORLD RESULT ============");
                     GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
@@ -229,8 +205,17 @@ public class Main {
         System.out.println("\t--threads-num <number>           Number of worker threads to use. (default: 10)");
         System.out.println("\t--verbose                        Enable verbose output.");
         System.out.println("\t--skip-peeler                    Skip the Potato Peeler process.");
-        System.out.println("\t--protected-chunks <path>        Path to the file listing protected chunks. (default: ./protected_chunks.list)");
         System.out.println("\t--server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
+        System.out.println();
+        System.out.println("List of protected chunks:");
+        System.out.println("\t  In order to protect certain chunks from being removed, you can create a file named 'chunks.protected' in the world(dimension) directory, as a sibling of the directory 'region'.");
+        System.out.println("\t  The file should contain the coordinates (ranges are supported) of the chunks you want to protect, one per line, in the format 'x,z' or 'x1-x2,z1-z2'.");
+        System.out.println("\t  In addition, wildcard asterisk is supported. For instance:");
+        System.out.println("\t    > By adding a line '*,*', all of the chunks will be protected.");
+        System.out.println("\t    > '0-10,*' will protect chunks from x=0 to x=10 in all z positions.");
+        System.out.println("\t    > '1-*,2-9' will protect chunks from x=1 to the maximum coordinate and z positions from z=2 to z=9.");
+        System.out.println("\t    > '114,514' will only protect the chunk at x=114, z=514.");
+        System.out.println("\t  Please note that comments starting with the '#' are supported, including both single-line and inline comments.");
         System.out.println();
         System.out.println("Example:");
         System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");

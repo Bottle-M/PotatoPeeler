@@ -1,14 +1,11 @@
 package indi.somebottle.utils;
 
-import com.github.davidmoten.rtree2.Entry;
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometries;
-import com.github.davidmoten.rtree2.geometry.Geometry;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.IntRange;
 import indi.somebottle.exceptions.NBTFormatException;
 import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
+import indi.somebottle.indexing.ChunksSpatialIndex;
 import indi.somebottle.streams.ChunkDataInputStream;
 
 import java.io.*;
@@ -145,21 +142,17 @@ public class ChunkUtils {
 
 
     /**
-     * 从名单文件中读取出受保护的区块，用 R* 树建立索引<br>
-     * R 树非常适合为空间中的范围查询建立索引（尤其是空间中存在形状不规则的矩形）。
+     * 从名单文件中读取出受保护的区块，建立区块索引
      *
-     * @param listFile 名单文件 File 对象
-     * @return R* 树对象
+     * @param protectedChunksIndex 区块空间索引对象
+     * @param listFile             名单文件 File 对象，其中的受保护区块将被存入 protectedChunksIndex 中
+     * @return 新的区块空间索引对象
      * @throws IOException 文件读取出错时抛出
      */
-    public static RTree<Boolean, Geometry> readProtectedChunks(File listFile) throws IOException {
+    public static ChunksSpatialIndex readProtectedChunks(ChunksSpatialIndex protectedChunksIndex, File listFile) throws IOException {
         // 支持类似 .gitignore 的 # 注释
         // 每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
         long lineCnt = 0; // 记录行号，方便定位错误
-        // R* 树
-        // 默认配置下 maxChildren=4, minChildren=round(4*0.4)=2
-        // 详见：https://github.com/davidmoten/rtree2/blob/45d209dff7d407632abfe7c67e2ff90f6ff24f03/src/main/java/com/github/davidmoten/rtree2/RTree.java#L348
-        RTree<Boolean, Geometry> tree = RTree.star().create();
         String line;
         try (
                 FileReader fr = new FileReader(listFile);
@@ -181,15 +174,15 @@ public class ChunkUtils {
                 try {
                     IntRange xRange = ParseUtils.parseSingleIntRange(parts[0]);
                     IntRange zRange = ParseUtils.parseSingleIntRange(parts[1]);
-                    // tree immutable
+                    // protectedChunksIndex immutable
                     // 注意 RangeUtils.parseSingleIntRange 方法保证 to > from，这也是 rtree 构建时的要求
                     // 采用双精度浮点数，不然 32 位有符号整数转换时可能损失精度
                     if (xRange.from == xRange.to && zRange.from == zRange.to) {
                         // 是一个点
-                        tree = tree.add(true, Geometries.point((double) xRange.from, zRange.from));
+                        protectedChunksIndex = protectedChunksIndex.add(xRange.from, zRange.from);
                     } else {
                         // 是一个矩形区域
-                        tree = tree.add(true, Geometries.rectangle((double) xRange.from, zRange.from, xRange.to, zRange.to));
+                        protectedChunksIndex = protectedChunksIndex.add(xRange.from, zRange.from, xRange.to, zRange.to);
                     }
                 } catch (Exception e) {
                     // 在头部加上行号再抛出
@@ -197,32 +190,21 @@ public class ChunkUtils {
                 }
             }
         }
-        return tree;
+        return protectedChunksIndex;
     }
 
-    /**
-     * 把区块坐标 (x, z) 处的区块加入受保护名单（R* 树索引）
-     *
-     * @param tree R* 树对象
-     * @param x    区块坐标 x
-     * @param z    区块坐标 z
-     * @return 新的 R* 树对象
-     */
-    public static RTree<Boolean, Geometry> addProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
-        return tree.add(true, Geometries.point((double) x, z));
-    }
 
     /**
-     * 把强制加载区块文件中的区块存入受保护名单（R* 树索引）<br>
+     * 把强制加载区块文件中的区块存入受保护区块索引<br>
      * - 这个文件是用 GZip 压缩的。
      *
-     * @param tree                  R* 树对象
+     * @param protectedChunksIndex  受保护区块索引
      * @param forceLoadedChunksFile 强制加载区块存储文件的 File 对象
-     * @return 新的 R* 树对象
+     * @return 新的区块空间索引对象
      * @throws IOException        如果读取失败会抛出此异常
      * @throws NBTFormatException 当 NBT 标签数据有误，无法读取到一些字段时抛出
      */
-    public static RTree<Boolean, Geometry> protectForceLoadedChunks(RTree<Boolean, Geometry> tree, File forceLoadedChunksFile) throws IOException {
+    public static ChunksSpatialIndex protectForceLoadedChunks(ChunksSpatialIndex protectedChunksIndex, File forceLoadedChunksFile) throws IOException {
         // 和 findInhabitedTime 思路类似
         // 强制加载区块存储文件是以 GZip 算法压缩的
         try (
@@ -249,25 +231,11 @@ public class ChunkUtils {
                     int x = (int) (chunkPos & 0xFFFFFFFFL);
                     int z = (int) (chunkPos >> 32 & 0xFFFFFFFFL);
                     // 把区块坐标点加入到索引中
-                    tree = addProtectedChunk(tree, x, z);
+                    protectedChunksIndex = protectedChunksIndex.add(x, z);
                 }
             }
         }
-        return tree;
-    }
-
-    /**
-     * 判断区块坐标 (x, z) 处的区块是否在受保护名单中（R* 树索引）
-     *
-     * @param tree R* 树对象
-     * @param x    区块坐标 x
-     * @param z    区块坐标 z
-     * @return 是否受保护
-     */
-    public static boolean isProtectedChunk(RTree<Boolean, Geometry> tree, int x, int z) {
-        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) x, z));
-        // 搜索到结果则说明 (x, z) 点和某些受保护区块有交集（本质上是一些矩形区域以及点）
-        return results.iterator().hasNext();
+        return protectedChunksIndex;
     }
 
 }

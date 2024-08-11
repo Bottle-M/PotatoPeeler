@@ -1,6 +1,9 @@
 package indi.somebottle;
 
 import indi.somebottle.entities.TaskParams;
+import indi.somebottle.indexing.ChunksSpatialIndex;
+import indi.somebottle.indexing.ChunksSpatialIndexFactory;
+import indi.somebottle.logger.GlobalLogger;
 import indi.somebottle.tasks.RegionTaskDispatcher;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.exceptions.RegionFileNotFoundException;
@@ -17,11 +20,18 @@ import java.nio.file.Path;
 
 public class Potato {
     /**
+     * 受保护区块清单的文件名 <br>
+     * 每个世界维度根目录下都可以配置这个文件。
+     */
+    public static final String PROTECTED_CHUNKS_LIST_FILENAME = "chunks.protected";
+
+    /**
      * 对某个世界的 .mca 区域文件进行处理
      *
-     * @param worldPath  世界目录路径
-     * @param threadsNum 线程数
-     * @param params     任务参数
+     * @param worldPath          世界目录路径
+     * @param threadsNum         线程数
+     * @param minInhabited       InhabitedTime 阈值 (tick)
+     * @param mcaModifiableDelay mca 文件创建后多久能删除（分钟）
      * @return 处理后的结果 PeelResult
      * @throws RegionFileNotFoundException       找不到区域文件时抛出
      * @throws RegionTaskInterruptedException    任务被中断时抛出
@@ -29,7 +39,7 @@ public class Potato {
      * @throws RegionTaskAlreadyStartedException 任务重复启动时抛出
      * @throws IOException                       读取文件时可能抛出
      */
-    public static PeelResult peel(String worldPath, int threadsNum, TaskParams params) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
+    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited, long mcaModifiableDelay) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
         // 先检查世界目录下的区域文件目录是否存在
         Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
         if (regionDirPath == null) {
@@ -42,12 +52,24 @@ public class Potato {
             // 没有找到 .mca 文件
             throw new RegionFileNotFoundException("Can not find .mca files in " + regionDirPath);
         }
+        // 找到世界维度根目录下的受保护区块清单
+        Path protectedChunksListPath = regionDirPath.resolveSibling(PROTECTED_CHUNKS_LIST_FILENAME);
+        // 建立区块空间索引（R* 树实现）
+        ChunksSpatialIndex protectedChunksIndex = ChunksSpatialIndexFactory.createRStarTreeIndex();
+        if (Files.exists(protectedChunksListPath)) {
+            // 若存在则从清单中读取受保护的区块
+            protectedChunksIndex = ChunkUtils.readProtectedChunks(protectedChunksIndex, protectedChunksListPath.toFile());
+            GlobalLogger.info("Protected chunks from " + protectedChunksListPath + " have been read.");
+        }
         // 找到世界目录下的数据目录中的 chunks.dat
         Path chunksDatPath = regionDirPath.resolveSibling("data").resolve("chunks.dat");
         if (Files.exists(chunksDatPath)) {
             // 如果 chunks.dat 存在，则读取本世界维度强制加载的区块，加入索引
-            params.protectedChunksTree = ChunkUtils.protectForceLoadedChunks(params.protectedChunksTree, chunksDatPath.toFile());
+            protectedChunksIndex = ChunkUtils.protectForceLoadedChunks(protectedChunksIndex, chunksDatPath.toFile());
+            GlobalLogger.info("Force-loaded chunks read.");
         }
+        // 构建任务参数
+        TaskParams params = new TaskParams(minInhabited, mcaModifiableDelay, protectedChunksIndex);
         // 创建任务调度器
         RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(threadsNum, params);
         // 把文件提交给任务调度器
