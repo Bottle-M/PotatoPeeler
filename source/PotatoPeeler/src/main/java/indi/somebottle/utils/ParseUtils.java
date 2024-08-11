@@ -11,15 +11,15 @@ public class ParseUtils {
     /**
      * 解析得到受保护区块清单每行中的单个 IntRange <br>
      *
-     * @param rangeStr 字符串形式的范围，形如 "x1-x2"，其中 x2 可选，x1 和 x2 都可以是 '*'
+     * @param rangeStr 字符串形式的范围，形如 "x1~x2"，其中 x2 可选，x1 和 x2 都可以是 '*'
      * @return IntRange 对象
      * @throws IOException           格式错误时抛出
      * @throws NumberFormatException 当配置的数字无法解析时抛出此异常
-     * @apiNote 此方法保证返回的 to > from
+     * @apiNote 此方法保证返回的 to > from <br> from~to 之间采用波浪符，因为 from 和 to 可能是负数
      */
     public static IntRange parseSingleIntRange(String rangeStr) throws IOException {
         // 如果 split 的 limit 不设为 -1，会丢弃尾部的空字串
-        String[] parts = rangeStr.split("-", -1);
+        String[] parts = rangeStr.split("~", -1);
         if (parts.length > 2) {
             // 格式错误
             throw new IOException("Invalid coordinate range: '" + rangeStr + "'");

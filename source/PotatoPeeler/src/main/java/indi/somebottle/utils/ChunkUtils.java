@@ -151,7 +151,7 @@ public class ChunkUtils {
      */
     public static ChunksSpatialIndex readProtectedChunks(ChunksSpatialIndex protectedChunksIndex, File listFile) throws IOException {
         // 支持类似 .gitignore 的 # 注释
-        // 每行一个配置，支持区块坐标 x,z、区块坐标范围 x1-x2,z1-z2 或 *,z1-z2 乃至 *-x2, z1-* 这样的配置
+        // 每行一个配置，支持区块坐标 x,z、区块坐标范围 x1~x2,z1~z2 或 *,z1~z2 乃至 *~x2, z1~* 这样的配置
         long lineCnt = 0; // 记录行号，方便定位错误
         String line;
         try (

@@ -9,10 +9,10 @@ import java.io.IOException;
 public class ListReadTest {
     @Test
     public void readList() throws IOException {
-        File listFile = new File("protected_chunks.list");
+        File listFile = new File("chunks.protected");
         ChunksSpatialIndex index = ChunksSpatialIndexFactory.createRStarTreeIndex();
         index = ChunkUtils.readProtectedChunks(index, listFile);
-        System.out.println(index.contains(2, 1));
+        System.out.println(index.contains(1, -15));
     }
 
     @Test

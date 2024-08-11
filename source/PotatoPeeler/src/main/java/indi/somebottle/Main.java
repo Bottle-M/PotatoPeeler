@@ -144,10 +144,10 @@ public class Main {
                     peeled = true;
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过
-                    GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", skipped.", e);
+                    GlobalLogger.warning("Regions of world: " + worldDirPath + " not found, skipped.");
                 } catch (IOException e) {
                     // IO 异常
-                    GlobalLogger.severe("I/O Exception occurred while processing world: " + worldDirPath + ", skipped.", e);
+                    GlobalLogger.severe("I/O Exception occurred while processing world: " + worldDirPath + ", skipped the world.", e);
                 } catch (RegionTaskInterruptedException e) {
                     // 发生了区域处理被中断的异常
                     GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", interrupted.", e);
@@ -208,14 +208,14 @@ public class Main {
         System.out.println("\t--server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
         System.out.println();
         System.out.println("List of protected chunks:");
-        System.out.println("\t  In order to protect certain chunks from being removed, you can create a file named 'chunks.protected' in the world(dimension) directory, as a sibling of the directory 'region'.");
-        System.out.println("\t  The file should contain the coordinates (ranges are supported) of the chunks you want to protect, one per line, in the format 'x,z' or 'x1-x2,z1-z2'.");
-        System.out.println("\t  In addition, wildcard asterisk is supported. For instance:");
-        System.out.println("\t    > By adding a line '*,*', all of the chunks will be protected.");
-        System.out.println("\t    > '0-10,*' will protect chunks from x=0 to x=10 in all z positions.");
-        System.out.println("\t    > '1-*,2-9' will protect chunks from x=1 to the maximum coordinate and z positions from z=2 to z=9.");
-        System.out.println("\t    > '114,514' will only protect the chunk at x=114, z=514.");
-        System.out.println("\t  Please note that comments starting with the '#' are supported, including both single-line and inline comments.");
+        System.out.println("\t- In order to protect certain chunks from being removed, you can create a file named 'chunks.protected' in the world(dimension) directory, as a sibling of the directory 'region'.");
+        System.out.println("\t- The file should contain the coordinates (ranges are supported) of the chunks you want to protect, one per line, in the format 'x,z' or 'x1~x2,z1~z2'.");
+        System.out.println("\t- In addition, wildcard asterisk is supported. For instance:");
+        System.out.println("\t   > By adding a line '*,*', all of the chunks will be protected.");
+        System.out.println("\t   > '0~10,*' will protect chunks from x=0 to x=10 in all z positions.");
+        System.out.println("\t   > '1~*,2~9' will protect chunks from x=1 to the maximum coordinate and z positions from z=2 to z=9.");
+        System.out.println("\t   > '114,514' will only protect the chunk at x=114, z=514.");
+        System.out.println("\t- Please note that comments starting with the '#' are supported, including both single-line and inline comments.");
         System.out.println();
         System.out.println("Example:");
         System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
