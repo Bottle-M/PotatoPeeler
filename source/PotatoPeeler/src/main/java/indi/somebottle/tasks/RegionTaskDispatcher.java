@@ -23,6 +23,8 @@ public class RegionTaskDispatcher {
     private final List<Queue<File>> queues = new ArrayList<>();
     // Runner 列表
     private final List<RegionTaskRunner> taskRunners = new ArrayList<>();
+    // 记录总共有多少个任务（有多少 .mca 文件待处理）
+    private int totalTaskCount = 0;
     // 记录上次把任务加入到哪个下标的队列中了
     private int enqueueIndex = 0;
     // 标记是否已经开始运行任务
@@ -52,6 +54,21 @@ public class RegionTaskDispatcher {
         // 把任务均匀地分散到各个队列中
         queues.get(enqueueIndex).add(mcaFile);
         enqueueIndex = (enqueueIndex + 1) % threadsNum;
+        totalTaskCount++;
+    }
+
+    /**
+     * 获得当前的任务完成进度
+     *
+     * @return 任务进度（0~100）
+     */
+    public float getTaskProcess() {
+        int tasksFinished = totalTaskCount;
+        // 统计剩余任务数
+        for (Queue<File> queue : queues) {
+            tasksFinished -= queue.size();
+        }
+        return (float) tasksFinished / totalTaskCount * 100;
     }
 
     /**
@@ -59,12 +76,12 @@ public class RegionTaskDispatcher {
      *
      * @return 是否正常完成
      */
-    @SuppressWarnings("StatementWithEmptyBody")
     public boolean waitForCompletion() {
         try {
-            while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                // 空体, pass
-                // 等待所有线程执行完成
+            // 等待所有线程执行完成
+            while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                // 打印进度
+                GlobalLogger.info("  > Progress: " + String.format("%.2f", getTaskProcess()) + "%");
             }
         } catch (InterruptedException e) {
             GlobalLogger.severe("Interrupted while waiting for .mca files to be processed.", e);
