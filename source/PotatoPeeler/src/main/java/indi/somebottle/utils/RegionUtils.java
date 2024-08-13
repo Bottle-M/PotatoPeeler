@@ -89,7 +89,6 @@ public class RegionUtils {
              * 但是 wiki 里是：x 先递增。
              *  SomeBottle 2024.8.5
              */
-            // TODO：重新测试 forceloaded 区块的保留
             for (int z = 0; z < 32; z++) {
                 for (int x = 0; x < 32; x++) {
                     // 先读取距离文件起点的偏移扇区数目

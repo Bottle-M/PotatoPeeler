@@ -80,7 +80,7 @@ public class NumUtils {
             sb.append(bytes / BYTES_PER_KIB).append(" KiB ");
             bytes %= BYTES_PER_KIB;
         }
-        if (bytes > 0 || sb.isEmpty()) {
+        if (bytes > 0 || sb.length() == 0) {
             sb.append(bytes).append(" Bytes");
         }
         return sb.toString().trim();

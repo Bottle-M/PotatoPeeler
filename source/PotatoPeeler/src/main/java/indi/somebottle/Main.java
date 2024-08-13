@@ -14,6 +14,8 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        // 设置编码为 UTF-8
+        System.setProperty("file.encoding", "UTF-8");
         // 如果一个参数都没有
         if (args.length == 0) {
             // 尝试从工作目录下的 potatopeeler.args 文件中读取参数

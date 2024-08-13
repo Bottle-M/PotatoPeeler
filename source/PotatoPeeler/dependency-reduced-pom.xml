@@ -7,6 +7,14 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.6.0</version>
         <executions>
@@ -21,13 +29,51 @@
                   <mainClass>indi.somebottle.Main</mainClass>
                 </transformer>
               </transformers>
-              <finalName>PotatoPeeler-${project.version}</finalName>
+              <finalName>PotatoPeeler-${project.version}-java${javaVersion}</finalName>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>java11</id>
+      <properties>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <javaVersion>11</javaVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
+    <profile>
+      <id>java16</id>
+      <properties>
+        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <javaVersion>16</javaVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
+    <profile>
+      <id>java17</id>
+      <properties>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <javaVersion>17</javaVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
+    <profile>
+      <id>java21</id>
+      <properties>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <javaVersion>21</javaVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
+  </profiles>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -42,9 +88,4 @@
       </exclusions>
     </dependency>
   </dependencies>
-  <properties>
-    <maven.compiler.target>21</maven.compiler.target>
-    <maven.compiler.source>21</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 </project>
