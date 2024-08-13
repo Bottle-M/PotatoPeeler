@@ -70,14 +70,12 @@ public class Main {
         List<String> worldDirPaths = ArgsUtils.parseWorldDirs(peelerArgs.get("--world-dirs"));
         long minInhabited = Long.parseLong(peelerArgs.get("--min-inhabited"));
         long coolDown = Long.parseLong(peelerArgs.get("--cool-down"));
-        long mcaModifiableDelay = Long.parseLong(peelerArgs.get("--mca-modifiable-delay"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
         boolean skipPeeler = peelerArgs.containsKey("--skip-peeler");
         // 列出 PotatoPeeler 相关的参数
         GlobalLogger.info("====== POTATO-PEELER PARAMS ======");
         GlobalLogger.info("Min inhabited time (tick): " + minInhabited);
         GlobalLogger.info("Cool down (min): " + coolDown);
-        GlobalLogger.info("MCA modifiable delay after creation (min): " + mcaModifiableDelay);
         GlobalLogger.info("Worker threads num: " + threadsNum);
         GlobalLogger.info("Verbose output: " + verboseOutput);
         GlobalLogger.info("Skip peeler: " + skipPeeler);
@@ -130,9 +128,9 @@ public class Main {
             for (String worldDirPath : worldDirPaths) {
                 try {
                     // 对于每个世界都进行处理
-                    GlobalLogger.info(">>> Processing " + worldDirPath + "...");
+                    GlobalLogger.info(">>> Processing '" + worldDirPath + "' ...");
                     // 任务参数
-                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited, mcaModifiableDelay);
+                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited);
                     GlobalLogger.info("=========== WORLD RESULT ============");
                     GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
@@ -144,13 +142,13 @@ public class Main {
                     peeled = true;
                 } catch (RegionFileNotFoundException e) {
                     // 发生了区域文件没找到的异常，跳过
-                    GlobalLogger.warning("Regions of world: " + worldDirPath + " not found, skipped.");
+                    GlobalLogger.warning("Regions of world: '" + worldDirPath + "' not found, skipped.");
                 } catch (IOException e) {
                     // IO 异常
-                    GlobalLogger.severe("I/O Exception occurred while processing world: " + worldDirPath + ", skipped the world.", e);
+                    GlobalLogger.severe("I/O Exception occurred while processing world: '" + worldDirPath + "', skipped the world.", e);
                 } catch (RegionTaskInterruptedException e) {
                     // 发生了区域处理被中断的异常
-                    GlobalLogger.severe("Failed to process regions of world: " + worldDirPath + ", interrupted.", e);
+                    GlobalLogger.severe("Failed to process regions of world: '" + worldDirPath + "', interrupted.", e);
                     // 退出程序
                     System.exit(1);
                 } catch (Exception e) {
@@ -195,13 +193,12 @@ public class Main {
         System.out.println("Author: github.com/SomeBottle");
         System.out.println();
         System.out.println("Usage: ");
-        System.out.println("\tjava [jvm-options] -jar PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...] [--server-jar <server.jar>]");
+        System.out.println("\tjava [jvm-options] -jar PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...]");
         System.out.println();
         System.out.println("Options:");
         System.out.println("\t--help                           Show this help message and exit.");
         System.out.println("\t--min-inhabited <ticks>          Minimum inhabited time (in ticks) for a chunk to be considered unused. (default: 0)");
         System.out.println("\t--cool-down <minutes>            Cooldown period (in minutes) after the last run before Potato Peeler can run again. (default: 0)");
-        System.out.println("\t--mca-modifiable-delay <minutes> Delay (in minutes) after the creation of an MCA file before its chunks can be removed. (default: 0)");
         System.out.println("\t--threads-num <number>           Number of worker threads to use. (default: 10)");
         System.out.println("\t--verbose                        Enable verbose output.");
         System.out.println("\t--skip-peeler                    Skip the Potato Peeler process.");
@@ -218,7 +215,7 @@ public class Main {
         System.out.println("\t- Please note that comments starting with the '#' are supported, including both single-line and inline comments.");
         System.out.println();
         System.out.println("Example:");
-        System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --mca-modifiable-delay 30 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
+        System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
         System.out.println();
         System.out.println("Note:");
         System.out.println("\t- World paths passed to '--world-dirs' should be separated by commas without any spaces.");

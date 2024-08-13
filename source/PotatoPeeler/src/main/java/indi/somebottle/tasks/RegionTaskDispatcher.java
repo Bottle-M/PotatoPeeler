@@ -81,7 +81,7 @@ public class RegionTaskDispatcher {
             // 等待所有线程执行完成
             while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
                 // 打印进度
-                GlobalLogger.info("  > Progress: " + String.format("%.2f", getTaskProcess()) + "%");
+                GlobalLogger.info(">>> Progress: " + String.format("%.2f", getTaskProcess()) + "%");
             }
         } catch (InterruptedException e) {
             GlobalLogger.severe("Interrupted while waiting for .mca files to be processed.", e);

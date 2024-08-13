@@ -28,10 +28,9 @@ public class Potato {
     /**
      * 对某个世界的 .mca 区域文件进行处理
      *
-     * @param worldPath          世界目录路径
-     * @param threadsNum         线程数
-     * @param minInhabited       InhabitedTime 阈值 (tick)
-     * @param mcaModifiableDelay mca 文件创建后多久能删除（分钟）
+     * @param worldPath    世界目录路径
+     * @param threadsNum   线程数
+     * @param minInhabited InhabitedTime 阈值 (tick)
      * @return 处理后的结果 PeelResult
      * @throws RegionFileNotFoundException       找不到区域文件时抛出
      * @throws RegionTaskInterruptedException    任务被中断时抛出
@@ -39,7 +38,7 @@ public class Potato {
      * @throws RegionTaskAlreadyStartedException 任务重复启动时抛出
      * @throws IOException                       读取文件时可能抛出
      */
-    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited, long mcaModifiableDelay) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
+    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
         // 先检查世界目录下的区域文件目录是否存在
         Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
         if (regionDirPath == null) {
@@ -69,7 +68,7 @@ public class Potato {
             GlobalLogger.info("Force-loaded chunks read.");
         }
         // 构建任务参数
-        TaskParams params = new TaskParams(minInhabited, mcaModifiableDelay, protectedChunksIndex);
+        TaskParams params = new TaskParams(minInhabited, protectedChunksIndex);
         // 创建任务调度器
         RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(threadsNum, params);
         // 把文件提交给任务调度器

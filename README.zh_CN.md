@@ -46,7 +46,6 @@ java [jvmOptions] -jar PotatoPeeler*.jar
     [--min-inhabited <ticks>]
     [--help]
     [--cool-down <minutes>]
-    [--mca-modifiable-delay <minutes>]
     [--threads-num <number>]
     [--verbose]
     [--skip-peeler]
@@ -65,7 +64,6 @@ java [jvmOptions] -jar PotatoPeeler*.jar
 | `--world-dirs` |  | 用逗号分隔的世界存档**路径**。<br><br> * 比如 `/opt/server/world,world_nether`，指定了两个世界目录，分别以绝对路径和相对路径的方式。程序会逐个处理这些世界。|
 | `--min-inhabited` | `0` | 区块的 `InhabitedTime` 阈值（单位为 **tick**，20 ticks = 1 秒）。<br><br> * 某个区块的 `InhabitedTime` **低于或等于**这个值时，若其**未受保护**<sup>[见下方](#5-受保护的区块)</sup>，则**会被移除**。<br>* 比如我想移除玩家总停留时间 $\le 5$ 秒的区块，就设定为 `100`。 |
 | `--cool-down` | `0` | 距离上次区块处理**过去多久后**才能再次使用本工具（单位为**分钟**）。<br><br> * 注意是自上次所有指定世界的区块处理完成起计时。比如采用了 `--skip-peeler` 标志跳过了区块处理，就不计入在内。 |
-| `--mca-modifiable-delay` | `0` | Anvil 文件（`.mca`）被创建多久后才能被修改（单位为**分钟**）。<br><br> * 此项用于防止 `.mca` 刚被创建不久，其中的区块就遭到移除。 |
 | `--threads-num` | `10` | 采用多少线程并发（多核情况下可能能并行）处理一个世界中的 Anvil 文件。 |
 | `--server-jar` |  | 指定 Minecraft 服务端 jar 包路径。<br><br> * 如果指定了可用的 jar 包，在本工具程序执行完后将会直接在当前 JVM 中运行此 jar 包，启动服务器。 |
 | jvmOptions |  | JVM 参数。<br><br> * 如果指定了 `--server-jar`，JVM 参数会被服务端沿用。 |
@@ -180,7 +178,7 @@ java -jar PotatoPeeler*.jar --world-dirs world,world_nether,/opt/server/world_th
 ### 7.2. 作为服务端前置程序使用
 
 ```bash
-# 从指定的三个世界中移除掉玩家总停留时间 <= 5 秒的区块
+# 从指定的两个世界中移除掉玩家总停留时间 <= 5 秒的区块
 # 移除完成后会在当前 JVM 中启动 purpur.jar
 # JVM 参数 -Xms1G -Xmx4G 会被沿用
 # 其他参数 / 标志 --nogui --forceUpgrade 会被传递给 purpur.jar 
@@ -236,6 +234,6 @@ Force-loaded chunks read.
 4. [区块存储格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97%E5%AD%98%E5%82%A8%E6%A0%BC%E5%BC%8F)  
 5. [NBT 二进制格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/NBT%E6%A0%BC%E5%BC%8F?variant=zh-cn#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%A0%BC%E5%BC%8F)  
 
-# License
+## License
 
 本项目使用 MIT 许可证，感谢你的使用 o(\*￣▽￣\*)o。  

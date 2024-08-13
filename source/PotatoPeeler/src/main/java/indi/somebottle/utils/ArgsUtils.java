@@ -21,8 +21,6 @@ public class ArgsUtils {
         PEELER_ARGS.put("--server-jar", true);
         // InhabitedTime 阈值，低于此值的区块会被移除，单位：tick
         PEELER_ARGS.put("--min-inhabited", true);
-        // .mca 文件在创建后多久才能被修改，单位：分钟
-        PEELER_ARGS.put("--mca-modifiable-delay", true);
         // 是否详细输出区块处理情况
         PEELER_ARGS.put("--verbose", false);
         // 是否跳过本次处理
@@ -80,10 +78,6 @@ public class ArgsUtils {
             GlobalLogger.warning("PotatoPeeler parameter --cool-down must be >= 0.");
             return false;
         }
-        if (!CheckUtils.isInt(peelerArgs.get("--mca-modifiable-delay"))) {
-            GlobalLogger.warning("PotatoPeeler parameter --mca-modifiable-delay must be an integer.");
-            return false;
-        }
         if (!CheckUtils.isInt(peelerArgs.get("--threads-num"))) {
             GlobalLogger.warning("PotatoPeeler parameter --threads-num must be an integer.");
             return false;
@@ -109,10 +103,6 @@ public class ArgsUtils {
         // 如果没有设定 cool-down，则默认为 0
         if (!peelerArgs.containsKey("--cool-down")) {
             peelerArgs.put("--cool-down", "0");
-        }
-        // 如果没有设定 mcaModifiableDelay，则默认为 0
-        if (!peelerArgs.containsKey("--mca-modifiable-delay")) {
-            peelerArgs.put("--mca-modifiable-delay", "0");
         }
         // 如果没有指定线程数，默认为 10
         if (!peelerArgs.containsKey("--threads-num")) {

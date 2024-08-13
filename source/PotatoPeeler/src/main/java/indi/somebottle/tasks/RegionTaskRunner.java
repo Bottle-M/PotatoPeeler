@@ -53,12 +53,6 @@ public class RegionTaskRunner implements Runnable {
             Path backupMCAPath = originalMCAPath.resolveSibling(originalMCAPath.getFileName() + ".bak");
             // 备份 MCA 文件对象
             File backupFile = backupMCAPath.toFile();
-            // 先检查自 mca 文件创建以来过去了多久
-            if (mcaFile.exists() && System.currentTimeMillis() - mcaFile.lastModified() < params.mcaModifiableDelay * 60 * 1000) {
-                // 说明 mca 文件创建时间距离现在还不够久，不能修改
-                GlobalLogger.fine(mcaFile.getAbsolutePath() + " has just been created, ignored.");
-                continue;
-            }
             // 先读取 Region 文件
             Region region;
             try {
