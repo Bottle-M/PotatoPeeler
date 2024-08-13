@@ -34,7 +34,7 @@ Lang: [English](README.md) | 简体中文
 
 ## 3. 安装
 
-1. 你应该已经按照了相应版本的 JRE（Java 运行环境），可以参考[这个文档](https://zh.minecraft.wiki/w/%E6%9C%8D%E5%8A%A1%E5%99%A8/%E9%9C%80%E6%B1%82#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%9C%80%E6%B1%82)。  
+1. 你应该已经安装了相应版本的 JRE（Java 运行环境），可以参考[这个文档](https://zh.minecraft.wiki/w/%E6%9C%8D%E5%8A%A1%E5%99%A8/%E9%9C%80%E6%B1%82#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%9C%80%E6%B1%82)。  
 2. 从 [Releases](https://github.com/Bottle-M/PotatoPeeler/releases/latest) 按照你的 Java 版本下载 `PotatoPeeler*.jar`，找个位置放着即可（比如 Minecraft 服务端根目录）。  
 
 ## 4. 使用
