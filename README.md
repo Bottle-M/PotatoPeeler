@@ -63,7 +63,7 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 | Parameter | Default Value | Description |
 |---|---|---|
 | `--world-dirs` |  | Comma-separated paths to Minecraft Worlds.<br><br> * For example, `/opt/server/world,world_nether` specifies two world directories, one with an absolute path and the other with a relative path. The program will process these worlds one by one. |
-| `--min-inhabited` | `0` | The `InhabitedTime` threshold for chunks (in **ticks**, 20 ticks = 1 second).<br><br> * A chunk with an `InhabitedTime` **less than or equal to** this value, and **not protected**<sup>[see below](#5-protected-chunks)</sup>, will be **removed**. <br>* For example, if you want to remove chunks where players have stayed for $\le 5$ seconds, set this to `100`. |
+| `--min-inhabited` | `0` | The `InhabitedTime` threshold for chunks (in **ticks**, 20 ticks = 1 second).<br><br> * A chunk with an `InhabitedTime` **less than or equal to** this value, and **not protected**<sup>[See below](#5-protected-chunks)</sup>, will be **removed**. <br>* For example, if you want to remove chunks where players have stayed for $\le 5$ seconds, set this to `100`. |
 | `--cool-down` | `0` | The amount of time that must wait for since the last chunk processing before this tool can be used again (in **minutes**).<br><br> * Note that the timer starts after the last chunk processing for all specified worlds has been completed. For example, if the `--skip-peeler` flag is used to skip chunk processing, it will not count toward this cooldown. |
 | `--threads-num` | `10` | The number of threads to use for concurrent (and possibly parallel) processing of Anvil files in a world. |
 | `--server-jar` |  | The path to the Minecraft server jar file.<br><br> * If a valid jar file is specified, this tool will run the jar file in the current JVM after chunk processing, starting the server. |
@@ -244,11 +244,11 @@ Typically, we will place the `potatopeeler.args` and `PotatoPeeler*.jar` files i
 
 ```bash
 Server Root
-├── PotatoPeeler-1.0.0.jar # 本工具程序
+├── PotatoPeeler-1.0.0.jar # PotatoPeeler
 ├── bukkit.yml
 ├── config
 ├── plugins
-├── potatopeeler.args # PotatoPeeler 参数文件
+├── potatopeeler.args # Command line parameters
 ├── server.properties
 ├── spigot.yml
 ├── purpur.jar
