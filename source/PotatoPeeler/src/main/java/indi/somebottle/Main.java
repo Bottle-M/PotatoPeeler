@@ -16,8 +16,14 @@ public class Main {
     public static void main(String[] args) {
         // 如果一个参数都没有
         if (args.length == 0) {
-            GlobalLogger.info("Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
-            System.exit(0);
+            // 尝试从工作目录下的 potatopeeler.args 文件中读取参数
+            try {
+                args = ArgsUtils.readArgsFromFile("potatopeeler.args");
+            } catch (IOException e) {
+                // 没有这个文件，或者文件中没有指定有效参数
+                GlobalLogger.info("No args provided. Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
+                System.exit(0);
+            }
         }
         // 获得 JVM 参数
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();

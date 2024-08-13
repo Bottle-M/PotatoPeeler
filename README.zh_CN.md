@@ -26,7 +26,7 @@
 
 2. 如果你的存档是通过**模组 / 外部软件**编辑得到的，而不是人为建造的，其中的区块的 `InhabitedTime` 值难以预料，这种情况下不建议使用本工具。  
 
-   > 当然，你也可以配置受保护的区块以防止某些区块被移除。
+   > 当然，你也可以配置[受保护的区块](#5-受保护的区块)以防止某些区块被移除。
 
 3. 本工具会对区域区块 Anvil 文件进行**原地处理**，发生的更改都是先写入一个临时文件再替换回去。尽管如此，还是建议时不时做一下备份。  
 
@@ -40,7 +40,7 @@
 你可以在命令行运行此工具程序：  
 
 ```bash
-java [jvmOptions] -jar PotatoPeeler*.jar 
+java [jvmOptions...] -jar PotatoPeeler*.jar 
     [--world-dirs <worldPath1>,<worldPath2>,...]
     [--server-jar <serverJarPath>]
     [--min-inhabited <ticks>]
@@ -69,9 +69,13 @@ java [jvmOptions] -jar PotatoPeeler*.jar
 | jvmOptions |  | JVM 参数。<br><br> * 如果指定了 `--server-jar`，JVM 参数会被服务端沿用。 |
 | additionalOptions |  | 剩余参数。<br><br> * 如果指定了 `--server-jar`，这些参数会被传递给服务端。| 
 
-* 注：对于原版存档格式，你可以这样指定各个世界维度： `--world-dirs world,world/DIM1,world/DIM-1`。  
+* 注 1：对于原版存档格式，你可以这样指定各个世界维度： `--world-dirs world,world/DIM1,world/DIM-1`。  
 
   > 实际上本工具会采用广度优先方式搜索目录下的 `region` 子目录。  
+
+* 注 2：如果不想在命令行写参数，你可以在 `PotatoPeeler*.jar` 的工作目录下建立一个文件 `potatopeeler.args`，把命令行参数全部写入此文件（JVM 参数除外）。   
+  
+  > 仅当命令行中没有指定参数时（JVM 参数除外），本工具才会读取 `potatopeeler.args` 文件。
 
 ## 5. 受保护的区块
 
@@ -218,6 +222,42 @@ Protected chunks from <path of chunks.protected> have been read.
 ```
 Force-loaded chunks read.
 ```
+
+### 7.6. 从文件中导入命令行参数
+
+<details>
+
+<summary>点击查看此示例</summary>
+
+有些面板服服务商支持自定义 jar 包，但是不支持自定义启动脚本，这种时候可以把命令行参数（不包括 JVM 参数）全部写入 `PotatoPeeler*.jar` 工作目录下的 `potatopeeler.args` 文件。  
+
+`potatopeeler.args` 文件示例如下：  
+
+```bash
+--min-inhabited 100 --world-dirs world,world_nether,world_the_end --server-jar purpur.jar
+```
+
+通常把 `potatopeeler.args` 和 `PotatoPeeler*.jar` 两个文件放到同一目录下：  
+
+```bash
+Server Root
+├── PotatoPeeler-1.0.0.jar # 本工具程序
+├── bukkit.yml
+├── config
+├── plugins
+├── potatopeeler.args # PotatoPeeler 参数文件
+├── server.properties
+├── spigot.yml
+├── purpur.jar
+├── whitelist.json
+├── world
+├── world_nether
+└── world_the_end
+```
+
+然后直接执行 `java -jar PotatoPeeler*.jar` 即可，命令行参数会自动从 `potatopeeler.args` 文件中读取。
+
+</details>
 
 ## 采用的开源项目
 

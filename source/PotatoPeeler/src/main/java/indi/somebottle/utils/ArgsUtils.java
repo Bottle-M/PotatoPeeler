@@ -3,6 +3,9 @@ package indi.somebottle.utils;
 import indi.somebottle.exceptions.PeelerArgIncompleteException;
 import indi.somebottle.logger.GlobalLogger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +34,30 @@ public class ArgsUtils {
         PEELER_ARGS.put("--threads-num", true);
         // 让程序打印使用信息
         PEELER_ARGS.put("--help", false);
+    }
+
+    /**
+     * 从文件中读取命令行参数
+     *
+     * @param filePath 文件路径
+     * @return 参数数组
+     * @throws IOException 文件读取失败时抛出；文件没有提供任何参数时也会抛出
+     */
+    public static String[] readArgsFromFile(String filePath) throws IOException {
+        Path argFilePath = Path.of(filePath);
+        byte[] allBytes = Files.readAllBytes(argFilePath);
+        String[] argList = new String(allBytes).split("\\s+");
+        // 去除头部的空字串
+        List<String> trimmedArgList = new ArrayList<>();
+        for (String arg : argList) {
+            if (arg.isEmpty())
+                continue;
+            trimmedArgList.add(arg);
+        }
+        // 文件中没有提供任何有效参数
+        if (trimmedArgList.isEmpty())
+            throw new IOException("No arguments provided in " + filePath);
+        return trimmedArgList.toArray(new String[0]);
     }
 
     /**
