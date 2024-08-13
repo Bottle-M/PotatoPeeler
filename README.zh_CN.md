@@ -2,6 +2,8 @@
 
 ![Peeling Potato](./imgs/peeling.gif)  
 
+Lang: [English](README.md) | 简体中文
+
 这是一个简单的小工具，用于移除 Minecraft **Java 版**存档中的无用区块，以腾出部分硬盘空间。  
 
 * 可以看作是 Java 语言实现的 [Thanos](https://github.com/aternosorg/thanos)。   
@@ -33,7 +35,7 @@
 ## 3. 安装
 
 1. 确保你有相应版本的 JRE（Java 运行环境）。
-2. 从 [Releases](https://github.com/Bottle-M/PotatoPeeler/releases/latest) 下载 `PotatoPeeler*.jar`，找个位置放着即可。
+2. 从 [Releases](https://github.com/Bottle-M/PotatoPeeler/releases/latest) 下载 `PotatoPeeler*.jar`，找个位置放着即可（比如 Minecraft 服务端根目录）。
 
 ## 4. 使用
 
@@ -75,7 +77,7 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 
 * 注 2：如果不想在命令行写参数，你可以在 `PotatoPeeler*.jar` 的工作目录下建立一个文件 `potatopeeler.args`，把命令行参数全部写入此文件（JVM 参数除外）。   
   
-  > 仅当命令行中没有指定参数时（JVM 参数除外），本工具才会读取 `potatopeeler.args` 文件。
+  > 仅当命令行中**没有指定**参数时（JVM 参数除外），本工具才会读取 `potatopeeler.args` 文件。
 
 ## 5. 受保护的区块
 
@@ -229,7 +231,9 @@ Force-loaded chunks read.
 
 <summary>点击查看此示例</summary>
 
-有些面板服服务商支持自定义 jar 包，但是不支持自定义启动脚本，这种时候可以把命令行参数（不包括 JVM 参数）全部写入 `PotatoPeeler*.jar` 工作目录下的 `potatopeeler.args` 文件。  
+当没有指定命令行参数时，程序会尝试从 `potatopeeler.args` 文件中读取参数。
+
+可以把命令行参数（不包括 JVM 参数）全部写入 `PotatoPeeler*.jar` 工作目录下的 `potatopeeler.args` 文件。  
 
 `potatopeeler.args` 文件示例如下：  
 
