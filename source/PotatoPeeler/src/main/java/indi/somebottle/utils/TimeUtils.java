@@ -17,7 +17,6 @@ public class TimeUtils {
     // 上次运行的时间
     private static long lastRunTime = 0;
 
-    // TODO: 测试在 Java 8 API 下是否能正常工作
     static {
         if (Files.exists(timeRecordFilePath)) {
             try {

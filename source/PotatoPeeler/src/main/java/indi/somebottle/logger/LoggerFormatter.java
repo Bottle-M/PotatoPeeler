@@ -11,7 +11,6 @@ import java.util.logging.LogRecord;
 public class LoggerFormatter extends Formatter {
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");
 
-    // TODO：待测试：Logger 格式化不输出中文字符
     @Override
     public String format(LogRecord record) {
         StringBuilder sb = new StringBuilder("[PotatoPeeler] ");

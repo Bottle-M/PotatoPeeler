@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>indi.somebottle</groupId>
   <artifactId>potatopeeler</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <build>
     <plugins>
       <plugin>
@@ -37,6 +37,15 @@
     </plugins>
   </build>
   <profiles>
+    <profile>
+      <id>java8</id>
+      <properties>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <javaVersion>8</javaVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
     <profile>
       <id>java11</id>
       <properties>
