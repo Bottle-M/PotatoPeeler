@@ -6,6 +6,7 @@ import indi.somebottle.logger.GlobalLogger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +45,8 @@ public class ArgsUtils {
      * @throws IOException 文件读取失败时抛出；文件没有提供任何参数时也会抛出
      */
     public static String[] readArgsFromFile(String filePath) throws IOException {
-        Path argFilePath = Path.of(filePath);
+        // TODO: 待测试是否能正常工作
+        Path argFilePath = Paths.get(filePath);
         byte[] allBytes = Files.readAllBytes(argFilePath);
         String[] argList = new String(allBytes).split("\\s+");
         // 去除头部的空字串
