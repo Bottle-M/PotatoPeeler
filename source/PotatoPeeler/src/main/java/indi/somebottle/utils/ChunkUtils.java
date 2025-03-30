@@ -1,5 +1,6 @@
 package indi.somebottle.utils;
 
+import indi.somebottle.constants.NBTTagConstants;
 import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.IntRange;
 import indi.somebottle.exceptions.NBTFormatException;
@@ -7,6 +8,10 @@ import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
 import indi.somebottle.indexing.ChunksSpatialIndex;
 import indi.somebottle.streams.ChunkDataInputStream;
+import indi.somebottle.constants.DataVersionConstants;
+import indi.somebottle.versioned.ChunksDatReadHandlerFactory;
+import indi.somebottle.entities.ForcedChunksLoadResult;
+import indi.somebottle.versioned.handlers.ChunksDatReadHandler;
 
 import java.io.*;
 import java.util.zip.GZIPInputStream;
@@ -15,34 +20,6 @@ import java.util.zip.GZIPInputStream;
  * 区块 Chunk 相关的工具方法
  */
 public class ChunkUtils {
-
-    /**
-     * nbt 二进制数据中的 InhabitedTime 标签部分的十六进制表示 <br>
-     * 0x04 表示这是一个 Long 类型标签 <br>
-     * 0x00 0x0D 表示这个标签的名字长度为 13 字节 <br>
-     * 0x49 0x6E 0x68 0x61 0x62 0x69 0x74 0x65 0x64 0x54 0x69 0x6d 0x65 表示标签名 "InhabitedTime" <br>
-     * 在此之后的 8 个字节即为 InhabitedTime 的值（大端）
-     * <br><br>
-     * 参考: <a href="https://zh.minecraft.wiki/w/NBT%E6%A0%BC%E5%BC%8F?variant=zh-cn#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%A0%BC%E5%BC%8F">NBT 二进制格式</a>, <a href="https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97%E6%A0%BC%E5%BC%8F">区块格式</a>
-     */
-    private static final byte[] INHABITED_TIME_TAG_BIN = {0x04, 0x00, 0x0D, 0x49, 0x6E, 0x68, 0x61, 0x62, 0x69, 0x74, 0x65, 0x64, 0x54, 0x69, 0x6d, 0x65};
-
-    /*
-        可以发现，INHABITED_TIME_TAG_BIN 序列无论以哪个下标为止，都没有任何的“相等前后缀”。
-
-        用 KMP 算法来考虑的话，我在 nbt 文件的字节序列中寻找 INHABITED_TIME_TAG_BIN 时，只要遇到和主字节串失配的地方，就可以直接把 INHABITED_TIME_TAG_BIN 的搜索指针回退到头部，而主字节串指针不用回退。
-
-        SomeBottle 2024.8.1
-     */
-
-    /**
-     * 强制加载区块存储文件中的 Forced 标签部分的十六进制表示 <br>
-     * 0x0C 表示这是一个 Long 类型数组 <br>
-     * 0x00 0x06 表示这个标签名字长 6 字节 <br>
-     * 后门这一段表示标签名 Forced。<br>
-     * 标签名后面 4 个字节是数组长度，随后则是 Long 类型的数组元素。
-     */
-    public static final byte[] FORCED_TAG_BIN = {0x0C, 0x00, 0x06, 0x46, 0x6F, 0x72, 0x63, 0x65, 0x64};
 
     /**
      * 从 .mca 文件中根据偏移读出特定的区块
@@ -121,7 +98,7 @@ public class ChunkUtils {
     public static long findInhabitedTime(RandomAccessFile chunkReader, int dataLen, int compressionType) throws IOException, CompressionTypeUnsupportedException {
         // 其实可以读取 nbt 文件的二进制流，找到指定的字节，虽然标签没有明显的头部和尾部标记，但是要找到 InhabitedTime 这个 Long 标签还是不难的
         try (ChunkDataInputStream cdis = new ChunkDataInputStream(chunkReader, dataLen, compressionType)) {
-            if (IOUtils.findAndSkipBytes(cdis, INHABITED_TIME_TAG_BIN)) {
+            if (IOUtils.findAndSkipBytes(cdis, NBTTagConstants.INHABITED_TIME_TAG_BIN)) {
                 // 如果找到了标签名，便接着读取后 8 个字节
                 // 注意 nbt Long 标签值是有符号数，因此用 long 存储
                 byte[] numBuf = new byte[8];
@@ -195,47 +172,46 @@ public class ChunkUtils {
 
 
     /**
-     * 把强制加载区块文件中的区块存入受保护区块索引<br>
+     * 把 chunks.dat 文件中的强制加载区块存入受保护区块索引<br>
      * - 这个文件是用 GZip 压缩的。
      *
-     * @param protectedChunksIndex  受保护区块索引
-     * @param forceLoadedChunksFile 强制加载区块存储文件的 File 对象
-     * @return 新的区块空间索引对象
+     * @param protectedChunksIndex 受保护区块索引
+     * @param chunksDatFile        chunks.dat 文件的 File 对象
+     * @return 返回更新后的索引以及新增的区块数量
      * @throws IOException        如果读取失败会抛出此异常
      * @throws NBTFormatException 当 NBT 标签数据有误，无法读取到一些字段时抛出
      */
-    public static ChunksSpatialIndex protectForceLoadedChunks(ChunksSpatialIndex protectedChunksIndex, File forceLoadedChunksFile) throws IOException {
+    public static ForcedChunksLoadResult protectForceLoadedChunks(ChunksSpatialIndex protectedChunksIndex, File chunksDatFile) throws IOException {
         // 和 findInhabitedTime 思路类似
         // 强制加载区块存储文件是以 GZip 算法压缩的
+        byte[] decompressedData;
         try (
-                FileInputStream fis = new FileInputStream(forceLoadedChunksFile);
+                FileInputStream fis = new FileInputStream(chunksDatFile);
                 BufferedInputStream bis = new BufferedInputStream(fis);
-                GZIPInputStream gzis = new GZIPInputStream(bis)
+                GZIPInputStream gzis = new GZIPInputStream(bis);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()
         ) {
-            if (IOUtils.findAndSkipBytes(gzis, FORCED_TAG_BIN)) {
-                byte[] numBuf = new byte[8];
-                // 找到了 Forced 标签，先读取其后 4 个字节，这是 Long 数组长度
-                if (gzis.read(numBuf, 0, 4) != 4) {
-                    // 读取失败
-                    throw new NBTFormatException("Forced tag was found, but unable to read array size in file:" + forceLoadedChunksFile.getAbsolutePath());
-                }
-                long arrSize = NumUtils.bigEndianToLong(numBuf, 4);
-                for (int i = 0; i < arrSize; i++) {
-                    // 读取数组中的每个元素
-                    if (gzis.read(numBuf) != 8) {
-                        // 读取失败
-                        throw new NBTFormatException("Forced tag was found, but unable to read array element [" + i + "] in file:" + forceLoadedChunksFile.getAbsolutePath());
-                    }
-                    long chunkPos = NumUtils.bigEndianToLong(numBuf, 8);
-                    // 强制加载区块文件中，每个 Long 元素的低 4 字节是 x 坐标，高 4 字节是 z 坐标
-                    int x = (int) (chunkPos & 0xFFFFFFFFL);
-                    int z = (int) (chunkPos >> 32 & 0xFFFFFFFFL);
-                    // 把区块坐标点加入到索引中
-                    protectedChunksIndex = protectedChunksIndex.add(x, z);
-                }
+            byte[] decompressBuf = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = gzis.read(decompressBuf)) != -1) {
+                baos.write(decompressBuf, 0, bytesRead);
+            }
+            decompressedData = baos.toByteArray();
+        }
+        InputStream bais = new ByteArrayInputStream(decompressedData);
+        // 根据 wiki，如果没有 DataVersion 字段，默认为 1343（JE 1.12.2）
+        int dataVersion = DataVersionConstants.DATA_VERSION_1_12_2;
+        if (IOUtils.findAndSkipBytes(bais, NBTTagConstants.DATA_VERSION_TAG_BIN)) {
+            byte[] numBuf = new byte[4];
+            if (bais.read(numBuf, 0, 4) == 4) {
+                dataVersion = (int) NumUtils.bigEndianToLong(numBuf, 4);
+            } else {
+                throw new NBTFormatException("DataVersion tag was found, but unable to read data version in file:" + chunksDatFile.getAbsolutePath());
             }
         }
-        return protectedChunksIndex;
+        // 读取 chunks.dat 文件中的强制加载区块到索引中
+        ChunksDatReadHandler chunksDatReadHandler = ChunksDatReadHandlerFactory.getChunksDatReadHandler(dataVersion, decompressedData, chunksDatFile);
+        return chunksDatReadHandler.loadForcedIntoSpatialIndex(protectedChunksIndex);
     }
 
 }

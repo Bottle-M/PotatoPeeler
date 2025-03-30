@@ -6,7 +6,7 @@
 
     <groupId>indi.somebottle</groupId>
     <artifactId>potatopeeler</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 
     <dependencies>
         <dependency>
@@ -31,8 +31,6 @@
         <profile>
             <id>java8</id>
             <properties>
-                <maven.compiler.source>1.8</maven.compiler.source>
-                <maven.compiler.target>1.8</maven.compiler.target>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <javaVersion>8</javaVersion>
             </properties>
@@ -40,8 +38,6 @@
         <profile>
             <id>java11</id>
             <properties>
-                <maven.compiler.source>11</maven.compiler.source>
-                <maven.compiler.target>11</maven.compiler.target>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <javaVersion>11</javaVersion>
             </properties>
@@ -49,8 +45,6 @@
         <profile>
             <id>java16</id>
             <properties>
-                <maven.compiler.source>16</maven.compiler.source>
-                <maven.compiler.target>16</maven.compiler.target>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <javaVersion>16</javaVersion>
             </properties>
@@ -58,8 +52,6 @@
         <profile>
             <id>java17</id>
             <properties>
-                <maven.compiler.source>17</maven.compiler.source>
-                <maven.compiler.target>17</maven.compiler.target>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <javaVersion>17</javaVersion>
             </properties>
@@ -67,8 +59,6 @@
         <profile>
             <id>java21</id>
             <properties>
-                <maven.compiler.source>21</maven.compiler.source>
-                <maven.compiler.target>21</maven.compiler.target>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <javaVersion>21</javaVersion>
             </properties>
@@ -82,8 +72,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <!-- JDK 9 之后支持 release 参数，为指定的 Java SE 发行版编译 -->
+                    <release>${javaVersion}</release>
                 </configuration>
             </plugin>
             <plugin>

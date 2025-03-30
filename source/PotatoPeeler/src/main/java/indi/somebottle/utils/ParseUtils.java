@@ -5,7 +5,7 @@ import indi.somebottle.entities.IntRange;
 import java.io.IOException;
 
 /**
- * 此类是用于处理解析的工具类
+ * 此类是用于处理格式解析的工具类
  */
 public class ParseUtils {
     /**

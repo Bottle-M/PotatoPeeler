@@ -1,3 +1,4 @@
+import indi.somebottle.entities.ForcedChunksLoadResult;
 import indi.somebottle.indexing.ChunksSpatialIndex;
 import indi.somebottle.indexing.ChunksSpatialIndexFactory;
 import indi.somebottle.utils.ChunkUtils;
@@ -19,7 +20,9 @@ public class ListReadTest {
     public void readForceLoadedChunks() throws IOException {
         File chunksDatFile = new File("chunks.dat");
         ChunksSpatialIndex index = ChunksSpatialIndexFactory.createRStarTreeIndex();
-        index = ChunkUtils.protectForceLoadedChunks(index, chunksDatFile);
-        System.out.println(index.contains(1, 3));
+        ForcedChunksLoadResult loadResult = ChunkUtils.protectForceLoadedChunks(index, chunksDatFile);
+        index = loadResult.getChunksSpatialIndex();
+        System.out.println("Loaded " + loadResult.getChunksCount() + " forced chunks.");
+        System.out.println(index.contains(71, 128));
     }
 }

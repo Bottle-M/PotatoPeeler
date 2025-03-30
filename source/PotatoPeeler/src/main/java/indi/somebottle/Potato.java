@@ -1,5 +1,6 @@
 package indi.somebottle;
 
+import indi.somebottle.entities.ForcedChunksLoadResult;
 import indi.somebottle.entities.TaskParams;
 import indi.somebottle.indexing.ChunksSpatialIndex;
 import indi.somebottle.indexing.ChunksSpatialIndexFactory;
@@ -63,9 +64,12 @@ public class Potato {
         // 找到世界目录下的数据目录中的 chunks.dat
         Path chunksDatPath = regionDirPath.resolveSibling("data").resolve("chunks.dat");
         if (Files.exists(chunksDatPath)) {
+            GlobalLogger.info("File chunks.dat found, reading force-loaded chunks.");
             // 如果 chunks.dat 存在，则读取本世界维度强制加载的区块，加入索引
-            protectedChunksIndex = ChunkUtils.protectForceLoadedChunks(protectedChunksIndex, chunksDatPath.toFile());
-            GlobalLogger.info("Force-loaded chunks read.");
+            ForcedChunksLoadResult loadResult = ChunkUtils.protectForceLoadedChunks(protectedChunksIndex, chunksDatPath.toFile());
+            protectedChunksIndex = loadResult.getChunksSpatialIndex();
+            long forceLoadedChunksCount = loadResult.getChunksCount();
+            GlobalLogger.info("Loaded " + forceLoadedChunksCount + " forced chunks.");
         }
         // 构建任务参数
         TaskParams params = new TaskParams(minInhabited, protectedChunksIndex);
