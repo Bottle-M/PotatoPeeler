@@ -221,7 +221,8 @@ Protected chunks from <path of chunks.protected> have been read.
 If there are force-loaded chunks in this world, it will print:  
 
 ```
-Force-loaded chunks read.
+File chunks.dat found, reading force-loaded chunks.
+Loaded <num> forced chunks.
 ```
 
 ### 7.6. Importing Command Line Arguments from a File

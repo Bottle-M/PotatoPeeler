@@ -222,7 +222,8 @@ Protected chunks from <path of chunks.protected> have been read.
 如果这个世界中包含被强制加载的区块，将会打印：  
 
 ```
-Force-loaded chunks read.
+File chunks.dat found, reading force-loaded chunks.
+Loaded <num> forced chunks.
 ```
 
 ### 7.6. 从文件中导入命令行参数
