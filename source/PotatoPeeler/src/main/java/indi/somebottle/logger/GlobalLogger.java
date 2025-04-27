@@ -13,6 +13,10 @@ public class GlobalLogger {
      */
     private static final Logger logger = Logger.getLogger("PotatoPeeler");
     /**
+     * 日志文件处理器
+     */
+    private static FileHandler logFileHandler = null;
+    /**
      * 日志存放目录
      */
     public static String LOGGER_DIR = "./peeler_logs";
@@ -30,20 +34,29 @@ public class GlobalLogger {
             logger.severe("Can not create log directory: " + LOGGER_DIR);
             System.exit(1);
         }
+        // 默认设置日志文件大小限制为 2MB，最多保留 10 个日志文件
+        resetLogFileHandler(1024 * 1024 * 2, 10);
+        // 防止日志在控制台重复输出，不使用继承的 handlers
+        logger.setUseParentHandlers(false);
+    }
+
+    public static void resetLogFileHandler(int sizeLimit, int maxCount) {
+        if (logFileHandler != null) {
+            // 移除旧的日志文件处理器(如果有的话)
+            logger.removeHandler(logFileHandler);
+            logFileHandler.close();
+        }
         String pathPattern = LOGGER_DIR + "/peeler_%g.log";
-        int sizeLimit = 1024 * 1024 * 2; // 单个日志最大 2 MiB
-        FileHandler hh = null;
         try {
-            hh = new FileHandler(pathPattern, sizeLimit, 10, true);
+            logFileHandler = new FileHandler(pathPattern, sizeLimit, maxCount, true);
         } catch (IOException e) {
             logger.severe("Can not create log file handler: " + e.getMessage());
             System.exit(1);
         }
-        hh.setFormatter(new LoggerFormatter());
-        hh.setLevel(Level.ALL);
-        logger.addHandler(hh);
-        // 防止日志在控制台重复输出，不使用继承的 handlers
-        logger.setUseParentHandlers(false);
+        logFileHandler.setFormatter(new LoggerFormatter());
+        logFileHandler.setLevel(Level.ALL);
+        logger.addHandler(logFileHandler);
+        logger.fine("Log file handler was reset, size limit per file: " + sizeLimit + ", max file count: " + maxCount);
     }
 
     /**
@@ -82,6 +95,16 @@ public class GlobalLogger {
      */
     public static void warning(String msg) {
         logger.warning(msg);
+    }
+
+    /**
+     * 记录一条警告日志，并附带异常信息
+     *
+     * @param msg 日志信息
+     * @param e   异常对象
+     */
+    public static void warning(String msg, Throwable e) {
+        logger.log(Level.WARNING, msg, e);
     }
 
     /**

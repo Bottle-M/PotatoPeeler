@@ -26,8 +26,8 @@ public class RegionTest {
 
     @Test
     public void regionModifyTest() {
-        File regionFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.-1.0.mca.zlib");
-        File outputFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.0.0.mca.modified");
+        File regionFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.-1.0.mca.uncompressed");
+        File outputFile = new File("E:\\Projects\\TestArea\\regionFiles\\r.-1.0.mca.modified");
         try {
             long startTime = System.currentTimeMillis();
             Region region = RegionUtils.readRegion(regionFile);
@@ -43,9 +43,13 @@ public class RegionTest {
                     chunk.setDeleteFlag(true);
                 }
             }
-            RegionUtils.writeRegion(region, regionFile, outputFile);
+            long bytesWrite = RegionUtils.writeRegion(region, regionFile, outputFile, false);
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println("处理耗时: " + timeElapsed + "ms");
+            System.out.println("写入的字节数: " + bytesWrite);
+            System.out.println("输出文件大小: " + outputFile.length());
+            System.out.println("估计减少的字节数: " + (regionFile.length() - bytesWrite));
+            System.out.println("实际减少的字节数: " + (regionFile.length() - outputFile.length()));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -32,6 +32,7 @@ public class Potato {
      * @param worldPath    世界目录路径
      * @param threadsNum   线程数
      * @param minInhabited InhabitedTime 阈值 (tick)
+     * @param dryRun       是否是试运行
      * @return 处理后的结果 PeelResult
      * @throws RegionFileNotFoundException       找不到区域文件时抛出
      * @throws RegionTaskInterruptedException    任务被中断时抛出
@@ -39,7 +40,7 @@ public class Potato {
      * @throws RegionTaskAlreadyStartedException 任务重复启动时抛出
      * @throws IOException                       读取文件时可能抛出
      */
-    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
+    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited, boolean dryRun) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
         // 先检查世界目录下的区域文件目录是否存在
         Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
         if (regionDirPath == null) {
@@ -72,11 +73,16 @@ public class Potato {
             GlobalLogger.info("Loaded " + forceLoadedChunksCount + " forced chunks.");
         }
         // 构建任务参数
-        TaskParams params = new TaskParams(minInhabited, protectedChunksIndex);
+        TaskParams params = new TaskParams(minInhabited, protectedChunksIndex, dryRun);
         // 创建任务调度器
         RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(threadsNum, params);
         // 把文件提交给任务调度器
         for (File mcaFile : mcaFiles) {
+            if (!mcaFile.canRead() || !mcaFile.canWrite()) {
+                // 如果没有读写权限，跳过
+                GlobalLogger.warning("File " + mcaFile.getAbsolutePath() + " can not be read or written.");
+                continue;
+            }
             dispatcher.addTask(mcaFile);
         }
         // 启动任务调度器

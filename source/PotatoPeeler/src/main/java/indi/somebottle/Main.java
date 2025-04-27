@@ -39,7 +39,7 @@ public class Main {
         } catch (PeelerArgIncompleteException e) {
             // 说明命令行参数不完整，打印错误信息
             GlobalLogger.severe(e.getMessage());
-            GlobalLogger.severe("Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
+            GlobalLogger.warning("Use 'java -jar PotatoPeeler.jar --help' to get help on usage.");
             System.exit(1);
         }
         // 可能只需要打印帮助信息
@@ -79,13 +79,19 @@ public class Main {
         long minInhabited = Long.parseLong(peelerArgs.get("--min-inhabited"));
         long coolDown = Long.parseLong(peelerArgs.get("--cool-down"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
+        int maxLogSize = Integer.parseInt(peelerArgs.get("--max-log-size"));
+        int retainLogFiles = Integer.parseInt(peelerArgs.get("--retain-log-files"));
+        boolean dryRun = peelerArgs.containsKey("--dry-run");
         boolean skipPeeler = peelerArgs.containsKey("--skip-peeler");
+        // 配置日志文件记录器
+        GlobalLogger.resetLogFileHandler(maxLogSize, retainLogFiles);
         // 列出 PotatoPeeler 相关的参数
         GlobalLogger.info("====== POTATO-PEELER PARAMS ======");
         GlobalLogger.info("Min inhabited time (tick): " + minInhabited);
         GlobalLogger.info("Cool down (min): " + coolDown);
         GlobalLogger.info("Worker threads num: " + threadsNum);
         GlobalLogger.info("Verbose output: " + verboseOutput);
+        GlobalLogger.info("Dry run: " + dryRun);
         GlobalLogger.info("Skip peeler: " + skipPeeler);
         GlobalLogger.info("World dir paths: ");
         for (String worldDirPath : worldDirPaths) {
@@ -125,7 +131,12 @@ public class Main {
             GlobalLogger.info("Currently in cool down period, skipped.");
         } else {
             // 开始处理区块
-            GlobalLogger.info("====== POTATO-PEELER RUNNING ======");
+            if (dryRun) {
+                // 特殊标记 dryRun 的情况
+                GlobalLogger.info("====== POTATO-PEELER RUNNING (DRY-RUN) ======");
+            } else {
+                GlobalLogger.info("====== POTATO-PEELER RUNNING ======");
+            }
             GlobalLogger.info("********* DO NOT INTERRUPT ********");
             if (!verboseOutput) {
                 // 提示用户可以打开细节输出
@@ -135,10 +146,9 @@ public class Main {
             boolean peeled = false;
             for (String worldDirPath : worldDirPaths) {
                 try {
-                    // 对于每个世界都进行处理
                     GlobalLogger.info(">>> Processing '" + worldDirPath + "' ...");
-                    // 任务参数
-                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited);
+                    // 开始对这个世界执行处理
+                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited, dryRun);
                     GlobalLogger.info("=========== WORLD RESULT ============");
                     GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
@@ -153,7 +163,7 @@ public class Main {
                     GlobalLogger.warning("Regions of world: '" + worldDirPath + "' not found, skipped.");
                 } catch (IOException e) {
                     // IO 异常
-                    GlobalLogger.severe("I/O Exception occurred while processing world: '" + worldDirPath + "', skipped the world.", e);
+                    GlobalLogger.warning("I/O Exception occurred while processing world: '" + worldDirPath + "', skipped the world.", e);
                 } catch (RegionTaskInterruptedException e) {
                     // 发生了区域处理被中断的异常
                     GlobalLogger.severe("Failed to process regions of world: '" + worldDirPath + "', interrupted.", e);
@@ -208,7 +218,10 @@ public class Main {
         System.out.println("\t--min-inhabited <ticks>          Minimum inhabited time (in ticks) for a chunk to be considered unused. (default: 0)");
         System.out.println("\t--cool-down <minutes>            Cooldown period (in minutes) after the last run before Potato Peeler can run again. (default: 0)");
         System.out.println("\t--threads-num <number>           Number of worker threads to use. (default: 10)");
+        System.out.println("\t--max-log-size <size>            Maximum size of a single log file in bytes. (default: 2097152)");
+        System.out.println("\t--retain-log-files <number>      Maximum number of log files to retain. (default: 10)");
         System.out.println("\t--verbose                        Enable verbose output.");
+        System.out.println("\t--dry-run                        Perform a dry run without modifying any files (recommended to use with --verbose).");
         System.out.println("\t--skip-peeler                    Skip the Potato Peeler process.");
         System.out.println("\t--server-jar <server.jar>        Path to the Minecraft server JAR file to launch after processing regions.");
         System.out.println();

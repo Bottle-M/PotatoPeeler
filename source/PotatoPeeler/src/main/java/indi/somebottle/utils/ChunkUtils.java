@@ -147,7 +147,7 @@ public class ChunkUtils {
                 String[] parts = line.split(",");
                 // 缺少了对 x 或者 z 坐标范围的指定
                 if (parts.length != 2)
-                    throw new IOException("Line " + lineCnt + ": Invalid line here: '" + line + "'");
+                    throw new IOException("(" + listFile.getAbsolutePath() + " format error) Line " + lineCnt + ": Invalid line here: '" + line + "'");
                 try {
                     IntRange xRange = ParseUtils.parseSingleIntRange(parts[0]);
                     IntRange zRange = ParseUtils.parseSingleIntRange(parts[1]);
@@ -163,7 +163,7 @@ public class ChunkUtils {
                     }
                 } catch (Exception e) {
                     // 在头部加上行号再抛出
-                    throw new IOException("Line " + lineCnt + ": " + e.getMessage() + ": Invalid line here: '" + line + "'");
+                    throw new IOException("(" + listFile.getAbsolutePath() + " format error) Line " + lineCnt + ": " + e.getMessage() + ": Invalid line here: '" + line + "'");
                 }
             }
         }

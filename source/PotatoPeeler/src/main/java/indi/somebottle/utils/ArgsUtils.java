@@ -25,16 +25,22 @@ public class ArgsUtils {
         PEELER_ARGS.put("--server-jar", true);
         // InhabitedTime 阈值，低于此值的区块会被移除，单位：tick
         PEELER_ARGS.put("--min-inhabited", true);
-        // 是否详细输出区块处理情况
-        PEELER_ARGS.put("--verbose", false);
-        // 是否跳过本次处理
-        PEELER_ARGS.put("--skip-peeler", false);
         // 处理间隔时间，单位：分钟
         PEELER_ARGS.put("--cool-down", true);
         // 处理时采用的线程数
         PEELER_ARGS.put("--threads-num", true);
+        // 每个日志文件的最大大小(字节)
+        PEELER_ARGS.put("--max-log-size", true);
+        // 日志文件的最大数量
+        PEELER_ARGS.put("--retain-log-files", true);
+        // 是否详细输出区块处理情况
+        PEELER_ARGS.put("--verbose", false);
+        // 是否跳过本次处理
+        PEELER_ARGS.put("--skip-peeler", false);
         // 让程序打印使用信息
         PEELER_ARGS.put("--help", false);
+        // 试运行选项
+        PEELER_ARGS.put("--dry-run", false);
     }
 
     /**
@@ -115,6 +121,24 @@ public class ArgsUtils {
             GlobalLogger.warning("PotatoPeeler parameter --threads-num must be >= 1.");
             return false;
         }
+        if (!CheckUtils.isInt(peelerArgs.get("--max-log-size"))) {
+            GlobalLogger.warning("PotatoPeeler parameter --max-log-size must be an integer.");
+            return false;
+        }
+        if (Long.parseLong(peelerArgs.get("--max-log-size")) < 0) {
+            // 不能小于 0
+            GlobalLogger.warning("PotatoPeeler parameter --max-log-size must be >= 0.");
+            return false;
+        }
+        if (!CheckUtils.isInt(peelerArgs.get("--retain-log-files"))) {
+            GlobalLogger.warning("PotatoPeeler parameter --retain-log-files must be an integer.");
+            return false;
+        }
+        if (Long.parseLong(peelerArgs.get("--retain-log-files")) < 1) {
+            // 不能小于 1
+            GlobalLogger.warning("PotatoPeeler parameter --retain-log-files must be >= 1.");
+            return false;
+        }
         return true;
     }
 
@@ -140,6 +164,14 @@ public class ArgsUtils {
         if (!peelerArgs.containsKey("--world-dirs")) {
             peelerArgs.put("--world-dirs", "");
         }
+        // 如果没有指定保存日志文件的大小，默认为 2 MiB
+        if (!peelerArgs.containsKey("--max-log-size")) {
+            peelerArgs.put("--max-log-size", "2097152");
+        }
+        // 如果没有指定日志文件的最大数量，默认为 10
+        if (!peelerArgs.containsKey("--retain-log-files")) {
+            peelerArgs.put("--retain-log-files", "10");
+        }
     }
 
     /**
@@ -147,7 +179,7 @@ public class ArgsUtils {
      *
      * @param args       命令行参数
      * @param peelerArgs PotatoPeeler 相关参数 Map，此 map 会被该函数修改。
-     * @return 除掉 Peeler 相关参数的剩余参数
+     * @return 除掉 Peeler 相关参数后的剩余参数
      * @throws PeelerArgIncompleteException 命令行参数不完整
      */
     public static List<String> stripPeelerArgs(String[] args, HashMap<String, String> peelerArgs) throws PeelerArgIncompleteException {

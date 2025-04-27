@@ -7,6 +7,8 @@ import indi.somebottle.exceptions.RegionFormatException;
 import indi.somebottle.exceptions.RegionPosNotFoundException;
 import indi.somebottle.exceptions.CompressionTypeUnsupportedException;
 import indi.somebottle.logger.GlobalLogger;
+import indi.somebottle.streams.ByteCountingOutputStream;
+import indi.somebottle.streams.NullOutputStream;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -17,6 +19,12 @@ import java.util.Queue;
 
 // 区域 Region 文件相关的工具方法
 public class RegionUtils {
+
+    /**
+     * 区域文件的扇区大小（4 KiB）
+     */
+    public static final long REGION_FILE_SECTOR_SIZE = 4096;
+
     /**
      * 扫描世界目录，找到其中的 region 目录（.mca 文件所在目录）
      *
@@ -68,7 +76,7 @@ public class RegionUtils {
      */
     public static Region readRegion(File regionFile) throws RegionPosNotFoundException, IOException, RegionFormatException, RegionChunkInitializedException {
         Region region = new Region(regionFile);
-        GlobalLogger.fine("Reading region file: " + regionFile.getName());
+        GlobalLogger.fine("Reading region file: " + regionFile.getAbsolutePath());
         // regionStream 用于读取 .mca 文件头部元数据
         // chunkReader 用于读取区块数据
         try (
@@ -101,7 +109,7 @@ public class RegionUtils {
                     // 通过与 0xFF，先提升为 int（因为 Java 的 byte 是 8 bit 有符号数），因为是大端。首个 8 位左移 16 位组成数值的最高字节， 以此类推把各个字节移动到对应位置上，通过或运算组成最终数值
                     // 因为单位是扇区，再乘上 4 KiB 得到偏移字节数
                     // long chunkOffset = ((long) (buffer[0] & 0xFF) << 16 | (long) (buffer[1] & 0xFF) << 8 | (long) (buffer[2] & 0xFF)) * 4096;
-                    long chunkOffset = NumUtils.bigEndianToLong(buffer, 3) * 4096;
+                    long chunkOffset = NumUtils.bigEndianToLong(buffer, 3) * REGION_FILE_SECTOR_SIZE;
                     // 接下来一个字节是此区块占用的扇区数
                     int sectorsOccupied = regionStream.read();
                     if (sectorsOccupied < 0) {
@@ -146,16 +154,24 @@ public class RegionUtils {
      *
      * @param region     区域对象
      * @param sourceFile 区域原数据所在文件的对象
-     * @param outputFile 输出文件对象
+     * @param outputFile 输出文件对象，dryRun=true 时此项可为 null
+     * @param dryRun     是否是试运行，试运行时不会写入任何文件
+     * @return 写入文件的总字节数
      * @throws RegionFormatException 如果 .mca 文件格式不正确会抛出此异常
      * @throws IOException           IO 异常
      * @apiNote sourceFile 用于读取原本的区块数据
      */
-    public static void writeRegion(Region region, File sourceFile, File outputFile) throws IOException, RegionFormatException {
-        GlobalLogger.fine("Writing region to file: " + outputFile.getAbsolutePath());
+    public static long writeRegion(Region region, File sourceFile, File outputFile, boolean dryRun) throws IOException, RegionFormatException {
+        if (dryRun) {
+            GlobalLogger.fine("(dry-run) Simulate writing region to file: " + sourceFile.getAbsolutePath());
+        } else {
+            GlobalLogger.fine("Writing region to file: " + outputFile.getAbsolutePath());
+        }
+        long bytesWrite;
         try (
-                FileOutputStream fos = new FileOutputStream(outputFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
+                OutputStream os = dryRun ? new NullOutputStream() : new FileOutputStream(outputFile);
+                BufferedOutputStream bos = new BufferedOutputStream(os);
+                ByteCountingOutputStream cfos = new ByteCountingOutputStream(bos);
                 RandomAccessFile chunkReader = new RandomAccessFile(sourceFile, "r")
         ) {
             // 缓冲区
@@ -168,7 +184,7 @@ public class RegionUtils {
                 for (int x = 0; x < 32; x++) {
                     chunkTmp = region.getChunkAt(x, z);
                     if (chunkTmp == null || chunkTmp.isDeleteFlag()) {
-                        // 如果区块不存在，或者被标记为移除，直接写入 4 个零字节
+                        // 若区块不存在或被标记为已删除，区块偏移和占用扇区数全置零
                         Arrays.fill(dataBuf, 0, 4, (byte) 0);
                     } else {
                         // 如果区块存在，写入偏移和长度
@@ -181,7 +197,7 @@ public class RegionUtils {
                         currChunkOffset += sectorsOccupied;
                     }
                     // 把每个区块的扇区偏移和占用扇区数写入
-                    bos.write(dataBuf, 0, 4);
+                    cfos.write(dataBuf, 0, 4);
                 }
             }
             // 接着写入时间戳表
@@ -196,7 +212,7 @@ public class RegionUtils {
                         NumUtils.longToBigEndian(region.getChunkModifiedTimeAt(x, z), dataBuf, 4);
                     }
                     // 把每个区块的时间戳写入
-                    bos.write(dataBuf, 0, 4);
+                    cfos.write(dataBuf, 0, 4);
                 }
             }
             // 最后拷贝现存区块的数据
@@ -205,8 +221,9 @@ public class RegionUtils {
             // 可以直接拿来用，可能不用再执行循环体 1024 次了
             for (Chunk chunk : region.getExistingChunks()) {
                 // 跳过被移除的区块
-                if (chunk.isDeleteFlag())
+                if (chunk.isDeleteFlag()) {
                     continue;
+                }
                 /*
                     因为区块占用的空间是扇区（4 KiB）的整数倍，因此拷贝的时候也可以直接以扇区为单位进行拷贝。
 
@@ -214,7 +231,7 @@ public class RegionUtils {
                  */
                 // 未被移除的区块直接把占用的扇区数据拷贝过来即可
                 // 需要读取 bytesRemaining 字节
-                long bytesRemaining = 4096L * chunk.getSectorsOccupiedInFile();
+                long bytesRemaining = REGION_FILE_SECTOR_SIZE * chunk.getSectorsOccupiedInFile();
                 // 跳转到区块数据在原文件中的起始位置
                 chunkReader.seek(chunk.getOffsetInFile());
                 while (bytesRemaining > 0) {
@@ -225,12 +242,14 @@ public class RegionUtils {
                         throw new RegionFormatException("MCA File format error in " + sourceFile.getName() + ", unable to copy chunk data, no enough bytes.");
                     }
                     // 写入到输出文件
-                    bos.write(dataBuf, 0, bytesToRead);
+                    cfos.write(dataBuf, 0, bytesToRead);
                     // 更新剩余字节数
                     bytesRemaining -= bytesToRead;
                 }
             }
+            bytesWrite = cfos.getBytesCount();
         }
+        return bytesWrite;
     }
 }
 
