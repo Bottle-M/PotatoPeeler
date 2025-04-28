@@ -30,7 +30,7 @@ This tool finds out chunks where players have barely stayed by examining the `In
 
    > Of course, you can configure [protected chunks](#5-protected-chunks) to prevent certain chunks from being removed.  
 
-3. This tool performs **in-place operations** on the region Anvil files, the changes will firstly be written to a temporary file and then replace the original file. It is still advisable to occasionally make backups.  
+3. This tool can performs **in-place operations** on the region Anvil files. Before writing to each file in place, a backup file will be created. If an error occurs during writing, it will automatically restore the file. It is still advisable to occasionally make manual backups.  
 
 ## 3. Installation
 
@@ -44,12 +44,16 @@ You can run this tool from the command line:
 ```bash
 java [jvmOptions...] -jar PotatoPeeler*.jar 
     [--world-dirs <worldPath1>,<worldPath2>,...]
+    [--output-dirs <outputWorldPath1>,<outputWorldPath2>,...]
     [--server-jar <serverJarPath>]
     [--min-inhabited <ticks>]
     [--help]
     [--cool-down <minutes>]
     [--threads-num <number>]
+    [--max-log-size <size>]
+    [--retain-log-files <number>]
     [--verbose]
+    [--dry-run]
     [--skip-peeler]
     [additionalOptions...]
 ```
@@ -58,14 +62,18 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 |---|---|
 | `--help` | Displays help information |
 | `--verbose` | Outputs detailed information to the log |
+| `--dry-run` | Performs a dry run, no actual write operations will be executed, recommended to combine with the `--verbose` flag |
 | `--skip-peeler` | Skips chunk processing, no chunks will be removed. If the `--server-jar` parameter is specified, it will directly launch the Minecraft server |
 
 | Parameter | Default Value | Description |
 |---|---|---|
 | `--world-dirs` |  | Comma-separated paths to Minecraft Worlds.<br><br> * For example, `/opt/server/world,world_nether` specifies two world directories, one with an absolute path and the other with a relative path. The program will process these worlds one by one. |
+| `--output-dirs` |  | Comma-separated **region file output paths**. <br><br> * ❗ If omitted, the operations will be **in-place**. <br> * If specified, the number of paths must be the same as `--world-dirs` <br> * If specified, processed `region` directories will be output to the given paths. <br> * Output dirs will be automatically created. |
 | `--min-inhabited` | `0` | The `InhabitedTime` threshold for chunks (in **ticks**, 20 ticks = 1 second).<br><br> * A chunk with an `InhabitedTime` **less than or equal to** this value, and **not protected**<sup>[See below](#5-protected-chunks)</sup>, will be **removed**. <br>* For example, if you want to remove chunks where players have stayed for $\le 5$ seconds, set this to `100`. <br>* It is not recommended to set this value to be $\gt 200$, the program will print a warning at startup if exceeded.<br>* The default value of `0` is already useful in most cases. |
 | `--cool-down` | `0` | The amount of time that must wait for since the last chunk processing before this tool can be used again (in **minutes**).<br><br> * Note that the timer starts after the last chunk processing for all specified worlds has been completed. For example, if the `--skip-peeler` flag is used to skip chunk processing, it will not count toward this cooldown. |
 | `--threads-num` | `10` | The number of threads to use for concurrent (and possibly parallel) processing of Anvil files in a world. |
+| `--max-log-size` | `2097152` | Maximum size (in bytes) for **​​a single**​​ log file. |
+| `--retain-log-files` | `10` | Maximum number of log files to retain. |
 | `--server-jar` |  | The path to the Minecraft server jar file.<br><br> * If a valid jar file is specified, this tool will run the jar file in the current JVM after chunk processing, starting the server. |
 | jvmOptions |  | JVM options.<br><br> * If `--server-jar` is specified, these JVM options will be inherited by the server. |
 | additionalOptions |  | Remaining parameters.<br><br> * If `--server-jar` is specified, these parameters will be passed to the server. |
@@ -168,6 +176,8 @@ Note: Non-vanilla servers may save dimensions like `DIM-1`, `DIM1` in separate d
 
 All logs output to the console will also be saved in the `peeler_logs` subdirectory of the tool's working directory.  
 
+* Tip: If you use the `--verbose` flag, it may generate a bulk of logs. You may adjust the `--max-log-size` and `--retain-log-files` parameters to prevent incomplete log files.  
+
 ## 7. Examples
 
 ### 7.1. Using as a Standalone Tool
@@ -263,6 +273,42 @@ Then simply execute `java -jar PotatoPeeler*.jar`, and the command line paramete
 
 </details>
 
+### 7.7. Outputting Processed Region Files to Specified Directories
+
+<details>
+
+<summary>Click to see this example</summary>
+
+```bash
+java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --output-dirs '/opt/trimmed/world_out_1,/opt/trimmed/world_out_2'
+```  
+
+* This is a ​​**non-in-place operation​​**, region files under directories specified by `--world-dirs` will not be modified.  
+
+After processing, `region` directories with processed region files will be generated under `/opt/trimmed/world_out_1` and `/opt/trimmed/world_out_2`. Example directory structure:  
+
+```bash
+world_out_1
+└── region
+    ├── r.-1.-1.mca
+    ├── r.-1.-2.mca
+    ├── r.-1.-3.mca
+    └── ...
+```
+
+* If the file to output already exists, the program will **skip** it.  
+
+</details>
+
+### 7.8. Dry-run
+
+```bash
+# The '--dry-run' flag performs a test run without writing any changes, allowing you to verify parameters and expected behaviors. 
+# Combine with '--verbose' flag for more detailed output, 
+# and use '--max-log-size' parameter to ensure complete log recording.
+java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --dry-run --verbose --max-log-size 10485760
+```
+
 ## Open Source Libraries Used
 
 Thanks to the hard work of open source developers!
@@ -271,6 +317,8 @@ Thanks to the hard work of open source developers!
 * [rtree2](https://github.com/davidmoten/rtree2)  
 
 ## References
+
+Credit to the maintainers of Minecraft Wiki!  
 
 1. [区域文件格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F)
 2. [区块标签存储格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97%E6%A0%87%E7%AD%BE%E5%AD%98%E5%82%A8%E6%A0%BC%E5%BC%8F)

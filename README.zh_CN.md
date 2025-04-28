@@ -30,7 +30,7 @@ Lang: [English](README.md) | 简体中文
 
    > 当然，你也可以配置[受保护的区块](#5-受保护的区块)以防止某些区块被移除。
 
-3. 本工具会对区域区块 Anvil 文件进行**原地处理**，发生的更改都是先写入一个临时文件再替换回去。尽管如此，还是建议时不时做一下备份。  
+3. 本工具可以对区域区块 Anvil 文件进行**原地处理**，原地写入每个文件前会进行备份，若写入出错则会自动还原。尽管如此，还是建议时不时对存档做一下手动备份。  
 
 ## 3. 安装
 
@@ -44,12 +44,16 @@ Lang: [English](README.md) | 简体中文
 ```bash
 java [jvmOptions...] -jar PotatoPeeler*.jar 
     [--world-dirs <worldPath1>,<worldPath2>,...]
+    [--output-dirs <outputWorldPath1>,<outputWorldPath2>,...]
     [--server-jar <serverJarPath>]
     [--min-inhabited <ticks>]
     [--help]
     [--cool-down <minutes>]
     [--threads-num <number>]
+    [--max-log-size <size>]
+    [--retain-log-files <number>]
     [--verbose]
+    [--dry-run]
     [--skip-peeler]
     [additionalOptions...]
 ```
@@ -58,15 +62,19 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 |---|---|
 | `--help` | 显示帮助信息 |
 | `--verbose` | 往日志中输出详细信息 |
+| `--dry-run` | 执行试运行，**不会进行任何实际的写入操作**，仅用于测试，建议与 `--verbose` 标志结合使用 |
 | `--skip-peeler` | 直接跳过区块处理过程。若指定了 `--server-jar` 参数，会直接启动 Minecraft 服务端 |  
 
 
 | 参数项 | 默认值 | 说明 |
 |---|---|---|
 | `--world-dirs` |  | 用逗号分隔的世界存档**路径**。<br><br> * 比如 `/opt/server/world,world_nether`，指定了两个世界目录，分别以绝对路径和相对路径的方式。程序会逐个处理这些世界。|
+| `--output-dirs` |  | 用逗号分隔的世界存档**输出路径**。<br><br> * ❗ 如果不指定这一项，将会**原地修改**文件。 <br> * 如果指定了这一项，指定的路径个数必须和 `--world-dirs` 的一致。<br> * 如果指定了这一项，处理后的 `region` 目录会被输出到指定的路径中。<br> * 输出目录会被自动创建。 |
 | `--min-inhabited` | `0` | 区块的 `InhabitedTime` 阈值（单位为 **tick**，20 ticks = 1 秒）。<br><br> * 某个区块的 `InhabitedTime` **低于或等于**这个值时，若其**未受保护**<sup>[见下方](#5-受保护的区块)</sup>，则**会被移除**。<br>* 比如我想移除玩家总停留时间 $\le 5$ 秒的区块，就设定为 `100`。<br>* 不建议将此值设置为 $\gt 200$，否则程序会在启动时发出警告。<br>* 默认值 `0` 其实已经有不错的效果。 |
 | `--cool-down` | `0` | 距离上次区块处理**过去多久后**才能再次使用本工具（单位为**分钟**）。<br><br> * 注意是自上次所有指定世界的区块处理完成起计时。比如采用了 `--skip-peeler` 标志跳过了区块处理，就不计入在内。 |
 | `--threads-num` | `10` | 采用多少线程并发（多核情况下可能能并行）处理一个世界中的 Anvil 文件。 |
+| `--max-log-size` | `2097152` | **单个**日志文件的最大大小(字节)。 |
+| `--retain-log-files` | `10` | 最多只保留几个日志文件。 |
 | `--server-jar` |  | 指定 Minecraft 服务端 jar 包路径。<br><br> * 如果指定了可用的 jar 包，在本工具程序执行完后将会直接在当前 JVM 中运行此 jar 包，启动服务器。 |
 | jvmOptions |  | JVM 参数。<br><br> * 如果指定了 `--server-jar`，JVM 参数会被服务端沿用。 |
 | additionalOptions |  | 剩余参数。<br><br> * 如果指定了 `--server-jar`，这些参数会被传递给服务端。| 
@@ -169,6 +177,8 @@ world
 
 所有输出到控制台的日志都会保存在本工具运行目录的 `peeler_logs` 子目录中。  
 
+* 小贴士: 如果你使用了 `--verbose` 选项，产生的日志量可能较大，这时你可以通过 `--max-log-size` 或 `--retain-log-files` 参数来进行调整以防日志不完整。  
+
 ## 7. 例子
 
 ### 7.1. 作为独立工具使用
@@ -264,6 +274,42 @@ Server Root
 
 </details>
 
+### 7.7. 将处理好的区域文件输出到指定目录
+
+<details>
+
+<summary>点击查看此示例</summary>
+
+```bash
+java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --output-dirs '/opt/trimmed/world_out_1,/opt/trimmed/world_out_2'
+```  
+
+* 这是**非原地操作**，`--world-dirs` 目录中的文件不会被修改。  
+
+处理完成后，`/opt/trimmed/world_out_1` 和 `/opt/trimmed/world_out_2` 目录下会生成 `region` 子目录，里面存放着处理好的区域文件，示例如下：  
+
+```bash
+world_out_1
+└── region
+    ├── r.-1.-1.mca
+    ├── r.-1.-2.mca
+    ├── r.-1.-3.mca
+    └── ...
+```
+
+* 如果输出目录下已经有同名文件存在，程序会**跳过输出**这个区域文件。   
+
+</details>
+
+### 7.8. 试运行，不进行任何实际的写入操作
+
+```bash
+# 采用 --dry-run 可以进行试运行，以检查参数和配置是否正确、程序是否能按预料运行。
+# 同时可以使用 --verbose 选项来让输出信息更详细
+# 以及使用 --max-log-size 参数来保证输出日志能被完整记录
+java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --dry-run --verbose --max-log-size 10485760
+```
+
 ## 采用的开源项目
 
 感谢开源开发者们的辛苦工作！
@@ -272,6 +318,8 @@ Server Root
 * [rtree2](https://github.com/davidmoten/rtree2)  
 
 ## 参考文档
+
+感谢 Minecraft Wiki 的维护者们！  
 
 1. [区域文件格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9F%9F%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F)  
 2. [区块标签存储格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97%E6%A0%87%E7%AD%BE%E5%AD%98%E5%82%A8%E6%A0%BC%E5%BC%8F)  
