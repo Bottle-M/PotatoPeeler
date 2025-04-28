@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Potato {
     /**
@@ -29,10 +30,11 @@ public class Potato {
     /**
      * 对某个世界的 .mca 区域文件进行处理
      *
-     * @param worldPath    世界目录路径
-     * @param threadsNum   线程数
-     * @param minInhabited InhabitedTime 阈值 (tick)
-     * @param dryRun       是否是试运行
+     * @param worldPathStr  世界目录路径
+     * @param outputPathStr 输出的世界目录路径（可能为空字串，即未指定）
+     * @param threadsNum    线程数
+     * @param minInhabited  InhabitedTime 阈值 (tick)
+     * @param dryRun        是否是试运行
      * @return 处理后的结果 PeelResult
      * @throws RegionFileNotFoundException       找不到区域文件时抛出
      * @throws RegionTaskInterruptedException    任务被中断时抛出
@@ -40,12 +42,12 @@ public class Potato {
      * @throws RegionTaskAlreadyStartedException 任务重复启动时抛出
      * @throws IOException                       读取文件时可能抛出
      */
-    public static PeelResult peel(String worldPath, int threadsNum, long minInhabited, boolean dryRun) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
+    public static PeelResult peel(String worldPathStr, String outputPathStr, int threadsNum, long minInhabited, boolean dryRun) throws RegionFileNotFoundException, RegionTaskInterruptedException, RegionTaskNotAcceptedException, RegionTaskAlreadyStartedException, IOException {
         // 先检查世界目录下的区域文件目录是否存在
-        Path regionDirPath = RegionUtils.findRegionDirPath(worldPath);
+        Path regionDirPath = RegionUtils.findRegionDirPath(worldPathStr);
         if (regionDirPath == null) {
             // 没有找到区域文件所在目录
-            throw new RegionFileNotFoundException("Can not find region directory in " + worldPath);
+            throw new RegionFileNotFoundException("Can not find region directory in " + worldPathStr);
         }
         // 扫描目录下的 .mca 文件
         File[] mcaFiles = regionDirPath.toFile().listFiles(file -> file.getName().endsWith(".mca"));
@@ -73,14 +75,15 @@ public class Potato {
             GlobalLogger.info("Loaded " + forceLoadedChunksCount + " forced chunks.");
         }
         // 构建任务参数
-        TaskParams params = new TaskParams(minInhabited, protectedChunksIndex, dryRun);
+        Path outputPath = outputPathStr.isEmpty() ? null : Paths.get(outputPathStr);
+        TaskParams params = new TaskParams(minInhabited, protectedChunksIndex, dryRun, Paths.get(worldPathStr), outputPath);
         // 创建任务调度器
         RegionTaskDispatcher dispatcher = new RegionTaskDispatcher(threadsNum, params);
         // 把文件提交给任务调度器
         for (File mcaFile : mcaFiles) {
             if (!mcaFile.canRead() || !mcaFile.canWrite()) {
                 // 如果没有读写权限，跳过
-                GlobalLogger.warning("File " + mcaFile.getAbsolutePath() + " can not be read or written.");
+                GlobalLogger.warning("File " + mcaFile.getAbsolutePath() + " can not be read or written, skipped.");
                 continue;
             }
             dispatcher.addTask(mcaFile);

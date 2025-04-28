@@ -1,6 +1,5 @@
-package indi.somebottle.tasks;
+package indi.somebottle.tasks.runners;
 
-import indi.somebottle.entities.Chunk;
 import indi.somebottle.entities.PeelResult;
 import indi.somebottle.entities.Region;
 import indi.somebottle.entities.TaskParams;
@@ -12,25 +11,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Queue;
 
-// 实现 Runnable，在一个线程内从队列中取出 .mca 文件进行处理
-public class RegionTaskRunner implements Runnable {
+/**
+ * 原地处理区域文件的线程 <br>
+ */
+public class InPlaceRegionTaskRunner implements RegionTaskRunner {
     private final TaskParams params; // 任务参数
     private final Queue<File> queue; // 此线程独有的任务队列
     private final PeelResult taskResult = new PeelResult(); // 存储本线程任务结果
 
-    public RegionTaskRunner(Queue<File> queue, TaskParams params) {
+    /**
+     * 初始化区域文件队列处理线程(原地)
+     *
+     * @param queue  区域文件队列
+     * @param params 任务参数
+     */
+    public InPlaceRegionTaskRunner(Queue<File> queue, TaskParams params) {
         this.queue = queue;
         this.params = params;
     }
 
-    /**
-     * 取回当前线程的执行统计结果
-     *
-     * @return PeelResult 对象
-     */
+    @Override
     public PeelResult getTaskResult() {
         return taskResult;
     }
@@ -47,13 +49,15 @@ public class RegionTaskRunner implements Runnable {
             // 队列有任务时就取出进行处理
             File mcaFile = queue.poll();
             long originalLength = mcaFile.length();
-            // MCA 文件路径
+            // 原 MCA 文件路径
             Path originalMCAPath = Paths.get(mcaFile.toURI());
-            // 备份 MCA 文件路径
+            // 备份 MCA 文件路径 (用于原地操作)
             Path backupMCAPath = originalMCAPath.resolveSibling(originalMCAPath.getFileName() + ".bak");
-            // 备份 MCA 文件对象
+            // 备份 MCA 文件对象 (用于原地操作)
             File backupFile = backupMCAPath.toFile();
-            // 先读取 Region 文件
+            // ##############################
+            //        Region 文件读取
+            // ##############################
             Region region;
             try {
                 region = RegionUtils.readRegion(mcaFile);
@@ -66,7 +70,7 @@ public class RegionTaskRunner implements Runnable {
                     try {
                         // 如果有的话尝试读取 .mca.bak
                         region = RegionUtils.readRegion(backupFile);
-                        // dryRun 模式下不执行实际的写操作
+                        // dryRun 模式下不执行这个 IO 操作
                         if (!params.dryRun) {
                             // 把无法读取的 .mca 移除，然后把备份文件重命名为 .mca，方便进行后面的流程
                             if (mcaFile.exists() && !mcaFile.delete()) {
@@ -84,30 +88,16 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             }
-            // 扫描区域所有现存区块，进行筛选
-            boolean hasModified = false; // 标记是否对区块进行了修改
-            List<Chunk> existingChunks = region.getExistingChunks();
-            for (Chunk chunk : existingChunks) {
-                if (chunk.isOverSized()) {
-                    // 如果区块数据较多，就不进行删除
-                    GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is oversize, ignored.");
-                    continue;
-                }
-                if (params.protectedChunksIndex.contains(chunk.getGlobalX(), chunk.getGlobalZ())) {
-                    // 如果区块在保护范围内，就不进行删除
-                    GlobalLogger.fine("Chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName() + " is protected, ignored.");
-                    continue;
-                }
-                if (chunk.getInhabitedTime() <= params.minInhabited) {
-                    // 如果区块的 inhabitedTime 小于等于阈值，就将其标记为待删除
-                    GlobalLogger.fine("Removed chunk at (" + chunk.getGlobalX() + "," + chunk.getGlobalZ() + ") in " + mcaFile.getName());
-                    chunk.setDeleteFlag(true);
-                    chunksRemoved++;
-                    hasModified = true;
-                }
-            }
-            // 如果这个区域没有被修改过，就跳过
-            if (!hasModified) {
+            // ##############################
+            //           区块筛选
+            // ##############################
+            long chunksMarked = markChunksForRemoval(region, params, mcaFile.getName());
+            // ##############################
+            //        写入 Region 文件
+            // ##############################
+            if (chunksMarked == 0) {
+                // 如果这个区域没有被修改过，就跳过
+                GlobalLogger.fine("No chunks marked for removal in region file: " + mcaFile.getAbsolutePath() + ", skipped.");
                 continue;
             }
             if (params.dryRun) {
@@ -121,7 +111,7 @@ public class RegionTaskRunner implements Runnable {
                     continue;
                 }
             } else {
-                // ------------- 实际运行 -------------
+                // ------------- 实际运行(原地操作) -------------
                 try {
                     // 先检查目标 backup 文件是否存在，若存在则移除
                     if (backupFile.exists() && !backupFile.delete()) {
@@ -161,7 +151,9 @@ public class RegionTaskRunner implements Runnable {
                 // 统计减少的数据大小
                 sizeReduced += (originalLength - mcaFile.length());
             }
+            // 成功写入后才算正确移除区块和处理了区域
             regionsAffected++;
+            chunksRemoved += chunksMarked;
         }
         // 更新任务结果
         taskResult.setSizeReduced(sizeReduced);

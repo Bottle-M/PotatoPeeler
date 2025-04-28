@@ -5,6 +5,8 @@ import indi.somebottle.entities.TaskParams;
 import indi.somebottle.exceptions.RegionTaskAlreadyStartedException;
 import indi.somebottle.exceptions.RegionTaskNotAcceptedException;
 import indi.somebottle.logger.GlobalLogger;
+import indi.somebottle.tasks.runners.RegionTaskRunner;
+import indi.somebottle.tasks.runners.RegionTaskRunnerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -123,7 +125,7 @@ public class RegionTaskDispatcher {
         started = true;
         // 启动 threadsNum 个线程
         for (int i = 0; i < threadsNum; i++) {
-            RegionTaskRunner runner = new RegionTaskRunner(queues.get(i), taskParams);
+            RegionTaskRunner runner = RegionTaskRunnerFactory.getTaskRunner(queues.get(i), taskParams);
             taskRunners.add(runner);
             executor.submit(runner);
         }

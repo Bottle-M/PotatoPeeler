@@ -76,6 +76,7 @@ public class Main {
         }
         // 解析参数值
         List<String> worldDirPaths = ArgsUtils.parseWorldDirs(peelerArgs.get("--world-dirs"));
+        List<String> outputDirPaths = ArgsUtils.parseWorldDirs(peelerArgs.get("--output-dirs"));
         long minInhabited = Long.parseLong(peelerArgs.get("--min-inhabited"));
         long coolDown = Long.parseLong(peelerArgs.get("--cool-down"));
         int threadsNum = Integer.parseInt(peelerArgs.get("--threads-num"));
@@ -97,7 +98,22 @@ public class Main {
         for (String worldDirPath : worldDirPaths) {
             GlobalLogger.info("\t" + worldDirPath);
         }
+        if (outputDirPaths.isEmpty()) {
+            GlobalLogger.info("In-place operation: true");
+        } else {
+            GlobalLogger.info("In-place operation: false");
+            GlobalLogger.info("Output world dir paths: ");
+            for (String outputDirPath : outputDirPaths) {
+                GlobalLogger.info("\t" + outputDirPath);
+            }
+        }
         GlobalLogger.info("==================================");
+        // 检查输出路径个数是否和世界路径个数一致
+        if (!outputDirPaths.isEmpty() && outputDirPaths.size() != worldDirPaths.size()) {
+            // 如果不一致则抛出异常
+            GlobalLogger.severe("The number of output paths (current: " + outputDirPaths.size() + ") must be equal to the number of world paths (" + worldDirPaths.size() + ").");
+            System.exit(1);
+        }
         // 在 minInhabited > 200 时发出警告
         if (minInhabited > 200) {
             GlobalLogger.warning("****** WARNING ******");
@@ -144,11 +160,17 @@ public class Main {
             }
             // 标记是否进行了处理
             boolean peeled = false;
-            for (String worldDirPath : worldDirPaths) {
+            for (int i = 0; i < worldDirPaths.size(); i++) {
+                String worldDirPath = worldDirPaths.get(i);
+                String outputDirPath = "";
+                if (!outputDirPaths.isEmpty()) {
+                    // 有指定输出路径就使用指定的输出路径
+                    outputDirPath = outputDirPaths.get(i);
+                }
                 try {
                     GlobalLogger.info(">>> Processing '" + worldDirPath + "' ...");
                     // 开始对这个世界执行处理
-                    PeelResult peelResult = Potato.peel(worldDirPath, threadsNum, minInhabited, dryRun);
+                    PeelResult peelResult = Potato.peel(worldDirPath, outputDirPath, threadsNum, minInhabited, dryRun);
                     GlobalLogger.info("=========== WORLD RESULT ============");
                     GlobalLogger.info("World: " + worldDirPath);
                     GlobalLogger.info("Time elapsed: " + (double) peelResult.getTimeElapsed() / 1000D + "s");
@@ -212,6 +234,7 @@ public class Main {
         System.out.println();
         System.out.println("Usage: ");
         System.out.println("\tjava [jvm-options] -jar PotatoPeeler.jar [options] [--world-dirs <worldPath1>,<worldPath2>,...]");
+        System.out.println("\t\t[--output-dirs <outputWorldPath1>,<outputWorldPath2>,...]");
         System.out.println();
         System.out.println("Options:");
         System.out.println("\t--help                           Show this help message and exit.");
@@ -235,11 +258,16 @@ public class Main {
         System.out.println("\t   > '114,514' will only protect the chunk at x=114, z=514.");
         System.out.println("\t- Please note that comments starting with the '#' are supported, including both single-line and inline comments.");
         System.out.println();
-        System.out.println("Example:");
+        System.out.println("Note:");
+        System.out.println("\t- World paths passed to '--world-dirs' and '--output-dirs' should be separated by commas.");
+        System.out.println("\t- If '--output-dirs' is not specified, the operations will be in-place.");
+        System.out.println("\t- If '--output-dirs' is specified, it must have the same number of paths as '--world-dirs'.");
+        System.out.println("\t- After the Potato Peeler process completes, the server JAR file will be launched in the current JVM. Any remaining arguments, including JVM options, will be passed to the server jar.");
+        System.out.println();
+        System.out.println("Example (In-place operation):");
         System.out.println("\tjava -Xmx4G -jar PotatoPeeler.jar --min-inhabited 50 --cool-down 60 --threads-num 5 --world-dirs 'world,world_nether,/opt/server/world_the_end' --server-jar server.jar");
         System.out.println();
-        System.out.println("Note:");
-        System.out.println("\t- World paths passed to '--world-dirs' should be separated by commas without any spaces.");
-        System.out.println("\t- After the Potato Peeler process completes, the server JAR file will be launched in the current JVM. Any remaining arguments, including JVM options, will be passed to the server jar.");
+        System.out.println("Example (Output to other directories):");
+        System.out.println("\tjava -jar PotatoPeeler.jar --world-dirs 'world,/opt/server/world_the_end' --output-dirs '/app/trimmed/world,/app/trimmed/world_the_end'");
     }
 }

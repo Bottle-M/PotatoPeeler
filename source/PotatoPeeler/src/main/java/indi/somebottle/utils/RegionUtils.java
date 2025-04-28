@@ -154,7 +154,7 @@ public class RegionUtils {
      *
      * @param region     区域对象
      * @param sourceFile 区域原数据所在文件的对象
-     * @param outputFile 输出文件对象，dryRun=true 时此项可为 null
+     * @param outputFile 输出文件对象，dryRun=true 时此项可为 null。注意，outputFile 会被完全重写。
      * @param dryRun     是否是试运行，试运行时不会写入任何文件
      * @return 写入文件的总字节数
      * @throws RegionFormatException 如果 .mca 文件格式不正确会抛出此异常

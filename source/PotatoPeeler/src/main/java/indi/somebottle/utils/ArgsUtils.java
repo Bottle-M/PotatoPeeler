@@ -21,6 +21,8 @@ public class ArgsUtils {
     static {
         // Minecraft 服务器世界目录路径，可以有多个（逗号分隔）
         PEELER_ARGS.put("--world-dirs", true);
+        // 输出的世界目录路径，可以有多个，必须和 --world-dirs 的目录数量一致（逗号分隔）
+        PEELER_ARGS.put("--output-dirs", true);
         // Minecraft 服务端 jar 包路径
         PEELER_ARGS.put("--server-jar", true);
         // InhabitedTime 阈值，低于此值的区块会被移除，单位：tick
@@ -163,6 +165,10 @@ public class ArgsUtils {
         // 如果没有指定世界路径，默认为空
         if (!peelerArgs.containsKey("--world-dirs")) {
             peelerArgs.put("--world-dirs", "");
+        }
+        // 如果没有指定输出路径，默认为空
+        if (!peelerArgs.containsKey("--output-dirs")) {
+            peelerArgs.put("--output-dirs", "");
         }
         // 如果没有指定保存日志文件的大小，默认为 2 MiB
         if (!peelerArgs.containsKey("--max-log-size")) {
