@@ -30,7 +30,7 @@ This tool finds out chunks where players have barely stayed by examining the `In
 
    > Of course, you can configure [protected chunks](#5-protected-chunks) to prevent certain chunks from being removed.  
 
-3. This tool can performs **in-place operations** on the region Anvil files. Before writing to each file in place, a backup file will be created. If an error occurs during writing, it will automatically restore the file. It is still advisable to occasionally make manual backups.  
+3. This tool can perform **in-place operations** on the region Anvil files. Before writing to each file in place, a backup file will be created. If an error occurs during writing, it will automatically restore the file. It is still advisable to occasionally make manual backups.  
 
 ## 3. Installation
 
