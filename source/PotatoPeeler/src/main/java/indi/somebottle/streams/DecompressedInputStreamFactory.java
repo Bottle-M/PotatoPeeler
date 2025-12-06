@@ -38,7 +38,7 @@ public class DecompressedInputStreamFactory {
                 return is;
             case 4:
                 // LZ4
-                return new LZ4BlockInputStream(is);
+                return LZ4BlockInputStream.newBuilder().build(is);
         }
         // 其余情况不支持
         throw new CompressionTypeUnsupportedException("Compression type: " + compressionType + " unsupported.");

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>indi.somebottle</groupId>
   <artifactId>potatopeeler</artifactId>
-  <version>1.2.1</version>
+  <version>1.2.2</version>
   <build>
     <plugins>
       <plugin>
@@ -72,6 +72,17 @@
       </properties>
     </profile>
   </profiles>
+  <repositories>
+    <repository>
+      <releases />
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central-direct</id>
+      <name>Maven Central Repository</name>
+      <url>https://repo1.maven.org/maven2/</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
