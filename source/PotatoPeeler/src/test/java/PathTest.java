@@ -20,4 +20,8 @@ public class PathTest {
         System.out.println("相对路径: " + relativePath);
         System.out.println("输出路径: " + resolvedPath);
     }
+    @Test
+    public void chunkTicketsPathTest(){
+
+    }
 }

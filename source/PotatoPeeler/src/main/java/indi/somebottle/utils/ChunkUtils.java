@@ -222,12 +222,12 @@ public class ChunkUtils {
      * 在给定的世界目录路径下查找 chunks.dat / chunk_tickets.dat 文件的路径<br>
      * - 注：26.1 版本之前是 data/chunks.dat，26.1 版本及其之后是 data/namespace/chunk_tickets.dat
      *
-     * @param worldPathStr 世界目录路径
+     * @param regionDirParentPath region 目录的父目录路径
      * @return chunks.dat / chunk_tickets.dat 文件的路径，如果没有找到则返回 null
      */
-    public static Path findChunkTicketsFilePath(String worldPathStr) {
+    public static Path findChunkTicketsFilePath(Path regionDirParentPath) {
         // 肯定放在和 region 文件夹同级的 data 文件夹里
-        Path dataDirPath = Paths.get(worldPathStr, "data");
+        Path dataDirPath = regionDirParentPath.resolve("data");
         if (Files.exists(dataDirPath) && Files.isDirectory(dataDirPath)) {
             // 26.1 版本之前是 data/chunks.dat
             Path chunksDatPath = dataDirPath.resolve("chunks.dat");
