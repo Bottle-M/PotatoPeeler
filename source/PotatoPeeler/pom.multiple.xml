@@ -82,6 +82,13 @@
                 <javaVersion>21</javaVersion>
             </properties>
         </profile>
+        <profile>
+            <id>java25</id>
+            <properties>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <javaVersion>25</javaVersion>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
