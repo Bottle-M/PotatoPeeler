@@ -310,12 +310,18 @@ world_out_1
 java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --dry-run --verbose --max-log-size 10485760
 ```
 
+## 8. 待办
+
+- [ ] 移除 `region` 目录中 Anvil 文件的区块时应该顺带移除 `entities` 和 `poi` 目录中相应文件中的部分数据。
+- [ ] 是否应该处理区块过大时产生的 `.mcc` 文件？  
+
 ## 采用的开源项目
 
 感谢开源开发者们的辛苦工作！
 
-* [lz4-java](https://github.com/lz4/lz4-java)  
-* [rtree2](https://github.com/davidmoten/rtree2)  
+* ~~[lz4/lz4-java](https://github.com/lz4/lz4-java)~~  
+* [yawkat/lz4-java](https://github.com/yawkat/lz4-java) ([Apache License 2.0](https://github.com/yawkat/lz4-java/blob/main/LICENSE.txt))  
+* [davidmoten/rtree2](https://github.com/davidmoten/rtree2)  ([Apache License 2.0](https://github.com/davidmoten/rtree2/blob/master/LICENCE))  
 
 ## 参考文档
 
