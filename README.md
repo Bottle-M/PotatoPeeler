@@ -326,6 +326,7 @@ Credit to the maintainers of Minecraft Wiki!
 4. [区块存储格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97%E5%AD%98%E5%82%A8%E6%A0%BC%E5%BC%8F)
 5. [区块标签 - Minecraft Wiki](https://zh.minecraft.wiki/w/%E5%8C%BA%E5%9D%97#%E6%A0%87%E7%AD%BE)
 6. [NBT 二进制格式 - Minecraft Wiki](https://zh.minecraft.wiki/w/NBT%E6%A0%BC%E5%BC%8F?variant=zh-cn#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%A0%BC%E5%BC%8F)
+    * [写得相当清晰的 NBT 格式说明](https://zh.minecraft.wiki/w/NBT%E6%A0%BC%E5%BC%8F?oldid=1048603)  <sup>(这个版本后来被替换了真的太可惜了！)</sup>
 
 ## License
 

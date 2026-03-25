@@ -64,12 +64,12 @@ public class Potato {
             protectedChunksIndex = ChunkUtils.readProtectedChunks(protectedChunksIndex, protectedChunksListPath.toFile());
             GlobalLogger.info("Protected chunks from " + protectedChunksListPath + " have been read.");
         }
-        // 找到世界目录下的数据目录中的 chunks.dat
-        Path chunksDatPath = regionDirPath.resolveSibling("data").resolve("chunks.dat");
-        if (Files.exists(chunksDatPath)) {
+        // 找到世界目录下的数据目录中的区块标签存储文件，这其中有强制加载区块的信息
+        Path chunkTicketsFilePath = ChunkUtils.findChunkTicketsFilePath(worldPathStr);
+        if (chunkTicketsFilePath != null) {
             GlobalLogger.info("File chunks.dat found, reading force-loaded chunks.");
             // 如果 chunks.dat 存在，则读取本世界维度强制加载的区块，加入索引
-            ForcedChunksLoadResult loadResult = ChunkUtils.protectForceLoadedChunks(protectedChunksIndex, chunksDatPath.toFile());
+            ForcedChunksLoadResult loadResult = ChunkUtils.protectForceLoadedChunks(protectedChunksIndex, chunkTicketsFilePath.toFile());
             protectedChunksIndex = loadResult.getChunksSpatialIndex();
             long forceLoadedChunksCount = loadResult.getChunksCount();
             GlobalLogger.info("Loaded " + forceLoadedChunksCount + " forced chunks.");

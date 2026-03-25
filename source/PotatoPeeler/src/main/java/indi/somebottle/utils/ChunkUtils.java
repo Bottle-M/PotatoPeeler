@@ -14,6 +14,10 @@ import indi.somebottle.entities.ForcedChunksLoadResult;
 import indi.somebottle.versioned.handlers.ChunksDatReadHandler;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -212,6 +216,37 @@ public class ChunkUtils {
         // 读取 chunks.dat 文件中的强制加载区块到索引中
         ChunksDatReadHandler chunksDatReadHandler = ChunksDatReadHandlerFactory.getChunksDatReadHandler(dataVersion, decompressedData, chunksDatFile);
         return chunksDatReadHandler.loadForcedIntoSpatialIndex(protectedChunksIndex);
+    }
+
+    /**
+     * 在给定的世界目录路径下查找 chunks.dat / chunk_tickets.dat 文件的路径<br>
+     * - 注：26.1 版本之前是 data/chunks.dat，26.1 版本及其之后是 data/namespace/chunk_tickets.dat
+     *
+     * @param worldPathStr 世界目录路径
+     * @return chunks.dat / chunk_tickets.dat 文件的路径，如果没有找到则返回 null
+     */
+    public static Path findChunkTicketsFilePath(String worldPathStr) {
+        // 肯定放在和 region 文件夹同级的 data 文件夹里
+        Path dataDirPath = Paths.get(worldPathStr, "data");
+        if (Files.exists(dataDirPath) && Files.isDirectory(dataDirPath)) {
+            // 26.1 版本之前是 data/chunks.dat
+            Path chunksDatPath = dataDirPath.resolve("chunks.dat");
+            if (Files.exists(chunksDatPath) && Files.isRegularFile(chunksDatPath)) {
+                return chunksDatPath;
+            }
+            // 26.1 版本及其之后是 data/<namespace>/chunk_tickets.dat
+            // 这里采用 DFS 方式查找
+            try (Stream<Path> pathStream = Files.walk(dataDirPath, 2)) {
+                return pathStream
+                        .filter(path -> path.getFileName().toString().equals("chunk_tickets.dat"))
+                        .findFirst()
+                        .orElse(null);
+            } catch (IOException e) {
+                // 读取文件失败，返回 null
+                return null;
+            }
+        }
+        return null;
     }
 
 }
