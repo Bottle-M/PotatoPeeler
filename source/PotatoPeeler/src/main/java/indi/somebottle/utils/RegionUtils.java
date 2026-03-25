@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 // 区域 Region 文件相关的工具方法
@@ -177,7 +178,9 @@ public class RegionUtils {
             // 缓冲区
             byte[] dataBuf = new byte[4096];
             Chunk chunkTmp;
-            // 写入区块偏移和长度表
+            // 按照写区块偏移的顺序，记录现存的、没有被移除的区块列表
+            List<Chunk> existingNonDeletedChunks = new LinkedList<>();
+            // -------------------------------------------------- 写入区块偏移和占用扇区数表
             // 记录当前区块起始位置在 mca 文件中的偏移扇区数
             int currChunkOffset = 2; // 初始为 2 个扇区
             for (int z = 0; z < 32; z++) {
@@ -195,12 +198,14 @@ public class RegionUtils {
                         dataBuf[3] = (byte) sectorsOccupied;
                         // 累加到扇区偏移上
                         currChunkOffset += sectorsOccupied;
+                        // 把现存且未被删除的区块加入列表，后面会按照这个列表的顺序把区块数据写入
+                        existingNonDeletedChunks.add(chunkTmp);
                     }
                     // 把每个区块的扇区偏移和占用扇区数写入
                     cfos.write(dataBuf, 0, 4);
                 }
             }
-            // 接着写入时间戳表
+            // -------------------------------------------------- 接着写入时间戳表
             for (int z = 0; z < 32; z++) {
                 for (int x = 0; x < 32; x++) {
                     chunkTmp = region.getChunkAt(x, z);
@@ -215,15 +220,11 @@ public class RegionUtils {
                     cfos.write(dataBuf, 0, 4);
                 }
             }
-            // 最后拷贝现存区块的数据
-            // 因为区块占用的空间实际上以扇区为单位，因此这里其实就是把原文件中区块对应的扇区复制过来
-            // 因为在记录现存区块时的扫描顺序也是 x:0-31, z:0-31，故 getExistingChunks 得到的列表
-            // 可以直接拿来用，可能不用再执行循环体 1024 次了
-            for (Chunk chunk : region.getExistingChunks()) {
-                // 跳过被移除的区块
-                if (chunk.isDeleteFlag()) {
-                    continue;
-                }
+            // -------------------------------------------------- 最后拷贝现存区块的数据
+            // 区块占用的空间实际上以扇区为单位，这里其实就是把原文件中区块对应的扇区复制过来
+            // existingNonDeletedChunks 中的区块是按照写入区块偏移的顺序排列的，因此直接按照这个顺序把区块数据写入输出文件即可
+            for (Chunk chunk : existingNonDeletedChunks) {
+                // 这里的 chunk 保证是存在且未被移除的
                 /*
                     因为区块占用的空间是扇区（4 KiB）的整数倍，因此拷贝的时候也可以直接以扇区为单位进行拷贝。
 
