@@ -80,7 +80,7 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 
 * Note 1: For the vanilla level format, you can specify the world dimensions like this: `--world-dirs world,world/DIM1,world/DIM-1`.
 
-  > In fact, this tool will search for the `region` directory using a breadth-first approach.
+  > In fact, this tool will search for the `region` directory using a **breadth-first approach**. If multiple region directories exist, the first one at the shallowest level will be selected.  
 
 * Note 2: If you prefer not to write parameters in the command line, you can create a file named `potatopeeler.args` in the working directory of `PotatoPeeler*.jar` and write all the command line parameters into this file (excluding JVM parameters).
   
@@ -218,7 +218,7 @@ java -jar PotatoPeeler*.jar --world-dirs 'C:\Users\Administrator\AppData\Roaming
 
 ### 7.5. Checking if Protected Chunks are Loaded Correctly
 
-![ProtectedChunksRead](./imgs/protected-chunks-log.png)
+![ProtectedChunksRead](./imgs/protected-chunks-log-1.3.0.png)  
 
 For each world dimension, if there is a `chunks.protected` configuration file, the program will print to the console:
 
@@ -231,7 +231,7 @@ Protected chunks from <path of chunks.protected> have been read.
 If there are force-loaded chunks in this world, it will print:  
 
 ```
-File chunks.dat found, reading force-loaded chunks.
+Chunk tickets file found, reading force-loaded chunks.
 Loaded <num> forced chunks.
 ```
 
@@ -309,12 +309,18 @@ world_out_1
 java -jar PotatoPeeler*.jar --world-dirs '/opt/server/world,/opt/server2/world' --dry-run --verbose --max-log-size 10485760
 ```
 
+## 8. TODO
+
+- [ ] When removing chunks from Anvil files in the `region` directory, the corresponding data in the `entities` and `poi` directories should also be removed.  
+- [ ] Should we handle `.mcc` files (generated when chunks become too large)?  
+
 ## Open Source Libraries Used
 
 Thanks to the hard work of open source developers!
 
-* [lz4-java](https://github.com/lz4/lz4-java)  
-* [rtree2](https://github.com/davidmoten/rtree2)  
+* ~~[lz4/lz4-java](https://github.com/lz4/lz4-java)~~  
+* [yawkat/lz4-java](https://github.com/yawkat/lz4-java) ([Apache License 2.0](https://github.com/yawkat/lz4-java/blob/main/LICENSE.txt))  
+* [davidmoten/rtree2](https://github.com/davidmoten/rtree2)  ([Apache License 2.0](https://github.com/davidmoten/rtree2/blob/master/LICENCE))  
 
 ## References
 

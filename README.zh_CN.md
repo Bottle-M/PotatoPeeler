@@ -81,7 +81,7 @@ java [jvmOptions...] -jar PotatoPeeler*.jar
 
 * 注 1：对于原版存档格式，你可以这样指定各个世界维度： `--world-dirs world,world/DIM1,world/DIM-1`。  
 
-  > 实际上本工具会采用广度优先方式搜索目录下的 `region` 子目录。  
+  > 实际上本工具会采用**广度优先方式**搜索目录下的 `region` 子目录，如果目录中不同层级有多个 `region` 目录，最浅层的首个 `region` 目录会被采用。
 
 * 注 2：如果不想在命令行写参数，你可以在 `PotatoPeeler*.jar` 的工作目录下建立一个文件 `potatopeeler.args`，把命令行参数全部写入此文件（JVM 参数除外）。   
   
@@ -219,7 +219,7 @@ java -jar PotatoPeeler*.jar --world-dirs 'C:\Users\Administrator\AppData\Roaming
 
 ### 7.5. 判断受保护区块是否正常载入
 
-![ProtectedChunksRead](./imgs/protected-chunks-log.png)  
+![ProtectedChunksRead](./imgs/protected-chunks-log-1.3.0.png)  
 
 对于每个世界维度，如果有 `chunks.protected` 配置文件，程序就会在控制台打印：  
 
@@ -232,7 +232,7 @@ Protected chunks from <path of chunks.protected> have been read.
 如果这个世界中包含被强制加载的区块，将会打印：  
 
 ```
-File chunks.dat found, reading force-loaded chunks.
+Chunk tickets file found, reading force-loaded chunks.
 Loaded <num> forced chunks.
 ```
 
