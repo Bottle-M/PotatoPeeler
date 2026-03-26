@@ -37,6 +37,14 @@ public class InPlaceRegionTaskRunner implements RegionTaskRunner {
         return taskResult;
     }
 
+    protected Region readRegion(File regionFile) throws Exception {
+        return RegionUtils.readRegion(regionFile);
+    }
+
+    protected long writeRegion(Region region, File sourceFile, File outputFile, boolean dryRun) throws IOException {
+        return RegionUtils.writeRegion(region, sourceFile, outputFile, dryRun);
+    }
+
     @Override
     public void run() {
         // 统计
@@ -60,7 +68,7 @@ public class InPlaceRegionTaskRunner implements RegionTaskRunner {
             // ##############################
             Region region;
             try {
-                region = RegionUtils.readRegion(mcaFile);
+                region = readRegion(mcaFile);
             } catch (Exception e) {
                 // 读取失败时检查有没有 .mca.bak 文件，如果有就尝试读取 .mca.bak
                 GlobalLogger.warning("Exception occurred while reading region file: " + mcaFile.getAbsolutePath(), e);
@@ -69,7 +77,7 @@ public class InPlaceRegionTaskRunner implements RegionTaskRunner {
                     GlobalLogger.info("Backup file found. Trying to read backup file: " + backupFile.getAbsolutePath());
                     try {
                         // 如果有的话尝试读取 .mca.bak
-                        region = RegionUtils.readRegion(backupFile);
+                        region = readRegion(backupFile);
                         // dryRun 模式下不执行这个 IO 操作
                         if (!params.dryRun) {
                             // 把无法读取的 .mca 移除，然后把备份文件重命名为 .mca，方便进行后面的流程
@@ -104,7 +112,7 @@ public class InPlaceRegionTaskRunner implements RegionTaskRunner {
                 // ------------- Dry-run -------------
                 try {
                     // 模拟写入区域文件
-                    long bytesWrite = RegionUtils.writeRegion(region, mcaFile, null, true);
+                    long bytesWrite = writeRegion(region, mcaFile, null, true);
                     sizeReduced += (originalLength - bytesWrite);
                 } catch (IOException e) {
                     GlobalLogger.warning("Failed to write modified region to file(dry-run): ", e);
@@ -129,7 +137,7 @@ public class InPlaceRegionTaskRunner implements RegionTaskRunner {
                 try {
                     // 注意，到这里时原 .mca 文件已经被重命名了 .mca.bak
                     // 因此要从 .mca.bak 拷贝数据到新生成的 .mca
-                    RegionUtils.writeRegion(region, backupFile, mcaFile, false);
+                    writeRegion(region, backupFile, mcaFile, false);
                 } catch (IOException e) {
                     // 写入失败，恢复备份
                     GlobalLogger.warning("Failed to write modified region to file: " + mcaFile.getAbsolutePath() + ", restoring backup...", e);

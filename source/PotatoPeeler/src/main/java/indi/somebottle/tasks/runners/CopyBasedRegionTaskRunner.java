@@ -43,6 +43,14 @@ public class CopyBasedRegionTaskRunner implements RegionTaskRunner {
         return taskResult;
     }
 
+    protected Region readRegion(File regionFile) throws Exception {
+        return RegionUtils.readRegion(regionFile);
+    }
+
+    protected long writeRegion(Region region, File sourceFile, File outputFile, boolean dryRun) throws IOException {
+        return RegionUtils.writeRegion(region, sourceFile, outputFile, dryRun);
+    }
+
     @Override
     public void run() {
         // 统计
@@ -85,7 +93,7 @@ public class CopyBasedRegionTaskRunner implements RegionTaskRunner {
             // ##############################
             Region region;
             try {
-                region = RegionUtils.readRegion(mcaFile);
+                region = readRegion(mcaFile);
             } catch (Exception e) {
                 // 读取失败
                 GlobalLogger.warning("Exception occurred while reading region file: " + mcaFile.getAbsolutePath(), e);
@@ -107,7 +115,7 @@ public class CopyBasedRegionTaskRunner implements RegionTaskRunner {
                 // ------------- Dry-run -------------
                 try {
                     // 模拟写入区域文件
-                    long bytesWrite = RegionUtils.writeRegion(region, mcaFile, null, true);
+                    long bytesWrite = writeRegion(region, mcaFile, null, true);
                     sizeReduced += (originalLength - bytesWrite);
                 } catch (IOException e) {
                     GlobalLogger.warning("Failed to write modified region to file(dry-run): ", e);
@@ -117,7 +125,7 @@ public class CopyBasedRegionTaskRunner implements RegionTaskRunner {
                 // ------------- 实际运行(输出到指定目录) -------------
                 try {
                     // 写入文件
-                    RegionUtils.writeRegion(region, mcaFile, outputMCAFile, false);
+                    writeRegion(region, mcaFile, outputMCAFile, false);
                     sizeReduced += (originalLength - outputMCAFile.length());
                 } catch (IOException e) {
                     GlobalLogger.warning("Failed to write modified region to file: " + outputMCAFile.getAbsolutePath(), e);

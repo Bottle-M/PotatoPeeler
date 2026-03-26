@@ -1,68 +1,44 @@
-import com.github.davidmoten.rtree2.Entry;
-import com.github.davidmoten.rtree2.RTree;
-import com.github.davidmoten.rtree2.geometry.Geometries;
-import com.github.davidmoten.rtree2.geometry.Geometry;
+import indi.somebottle.indexing.ChunksSpatialIndex;
+import indi.somebottle.indexing.ChunksSpatialIndexFactory;
 import org.junit.Test;
 
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+/**
+ * Covers the spatial-index behavior used to protect chunks and chunk ranges from removal.
+ * 覆盖用于保护区块和区块范围不被移除的空间索引行为。
+ */
 public class RTreeTest {
+    /**
+     * Verifies that point entries are indexed and queried precisely.
+     * 验证点状条目会被精确索引并正确命中查询。
+     */
     @Test
-    public void intensiveTest() throws ExecutionException, InterruptedException {
-        Random rd = new Random();
-/*        try {
-            // 20 秒后启动
-            Thread.sleep(10 * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
-        // R* 树
-        // 默认配置下 maxChildren=4, minChildren=round(4*0.4)=2
-        RTree<Boolean, Geometry> tree = RTree.star().create();
-        for (int i = 0; i < 100; i++) {
-            // 随机生成 100 个矩形，模拟 100 个不同大小的受保护区块区域
-            // 注意 x2 必须大于 x1, y2 必须大于 y1
-            double x1 = rd.nextInt(), y1 = rd.nextInt(), x2 = x1 + (double) rd.nextInt(3000000), y2 = y1 + (double) rd.nextInt(3000000);
-            tree = tree.add(true, Geometries.rectangle(x1, y1, x2, y2));
-        }
-        int hitNum = 0, missNum = 0;
-        long startTime = System.currentTimeMillis();
-        // 1024 * 1000 次查询
-        for (int i = 0; i < 1024 * 1000; i++) {
-            Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point((double) rd.nextInt(), rd.nextInt()));
-            if (results.iterator().hasNext()) {
-                hitNum++;
-            } else {
-                missNum++;
-            }
-        }
-        long timeElapsed = System.currentTimeMillis() - startTime;
-        System.out.println("Time elapsed: " + timeElapsed + " ms");
-        System.out.println("Hit: " + hitNum + ", miss: " + missNum);
-        // 测试结果：1024 * 1000 次查询，即模拟查询 1000 个 mca 文件中的所有区块，耗时 1000 ms 左右，效率很高
-        /*System.gc();
-        try {
-            // 触发 GC 后等待 20 秒
-            Thread.sleep(20 * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
+    public void pointEntriesCanBeQueried() {
+        ChunksSpatialIndex index = ChunksSpatialIndexFactory.createRStarTreeIndex()
+                .add(1, 2)
+                .add(-5, 7);
+
+        assertTrue(index.contains(1, 2));
+        assertTrue(index.contains(-5, 7));
+        assertFalse(index.contains(0, 0));
     }
 
+    /**
+     * Verifies that rectangular protected areas include their covered points while leaving outside
+     * coordinates unmatched.
+     * 验证矩形保护区域会覆盖其内部坐标，同时不会错误命中外部坐标。
+     */
     @Test
-    public void hitTest() {
-        // R* 树
-        RTree<Boolean, Geometry> tree = RTree.star().maxChildren(6).create();
-        // 形成 L 形，测试边界是否准确
-        tree = tree.add(true, Geometries.rectangle(0f, 0f, 3f, 1f))
-                .add(true, Geometries.rectangle(2f, 0f, 3f, 4f))
-                .add(true, Geometries.point(1f, 2f));
-        Iterable<Entry<Boolean, Geometry>> results = tree.search(Geometries.point(2f, 4f));
-        if (results.iterator().hasNext()) {
-            System.out.println("Hit!");
-        } else {
-            System.out.println("Miss!");
-        }
+    public void rectangularEntriesCoverTheirWholeArea() {
+        ChunksSpatialIndex index = ChunksSpatialIndexFactory.createRStarTreeIndex()
+                .add(0, 0, 3, 1)
+                .add(2, 0, 3, 4)
+                .add(1, 2);
+
+        assertTrue(index.contains(2, 4));
+        assertTrue(index.contains(1, 2));
+        assertFalse(index.contains(4, 4));
     }
 }
