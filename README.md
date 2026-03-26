@@ -34,7 +34,7 @@ This tool finds out chunks where players have barely stayed by examining the `In
 
 ## 3. Installation
 
-1. You should have already installed the corresponding version of JRE (Java Runtime Environment). For details, refer to [this document](https://minecraft.wiki/w/Server/Requirements#Server_requirements).
+1. You should have already installed the corresponding version of JRE (Java Runtime Environment). For details, refer to [this document](https://minecraft.wiki/w/Java_Edition#System_requirements).
 2. Download the `PotatoPeeler*.jar` from [Releases](https://github.com/Bottle-M/PotatoPeeler/releases/latest) according to your Java version, and place it in a suitable location (such as the root directory of your Minecraft Server).  
 
 ## 4. Usage
