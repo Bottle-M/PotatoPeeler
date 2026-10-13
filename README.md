@@ -133,7 +133,7 @@ world
 └── session.lock
 ```
 
-Note: Non-vanilla servers may save dimensions like `DIM-1`, `DIM1` in separate directories, commonly as `world_nether/DIM-1`, `world_the_end/DIM1`.  
+Note: Non-vanilla servers may save dimensions like `DIM-1`, `DIM1` in separate directories, commonly as `world_nether/DIM-1`, `world_the_end/DIM1` (before 26.1).  
 
 </details>
 

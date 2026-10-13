@@ -134,7 +134,7 @@ world
 └── session.lock
 ```
 
-注：非原版服务端可能把 `DIM-1`, `DIM1` 这些维度单独存放在其他目录中，比较常见的则是 `world_nether/DIM-1`，`world_the_end/DIM1`。
+注：非原版服务端可能把 `DIM-1`, `DIM1` 这些维度单独存放在其他目录中，比较常见的则是 `world_nether/DIM-1`，`world_the_end/DIM1` (在 26.1 之前)。
 
 </details>
 
